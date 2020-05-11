@@ -22,7 +22,7 @@ const Promise = require('bluebird');
 const R = require('ramda');
 const RA = require('ramda-adjunct');
 const { regexExp } = require('./constants');
-const { trace } = require('./ramda_utils');
+const { trace } = require('../ramda/trace');
 
 const getMaxOfArray = (arrayData) => (
   Math.max.apply(Math, arrayData.data.map((o) => o[arrayData.key]))

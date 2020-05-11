@@ -5,7 +5,7 @@ const uniqBy = require('lodash/fp/uniqBy');
 const isEmpty = require('lodash/isEmpty');
 const isArray = require('lodash/fp/isArray');
 const isPlainObject = require('lodash/isPlainObject');
-const { trace } = require('./ramda_utils');
+const { trace } = require('../ramda/trace');
 /**
  * Uniq group item by uniqKey if uniqKey not provided
  * return the groupData

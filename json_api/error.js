@@ -9,7 +9,7 @@ const isPlainObject = require('lodash/isPlainObject');
 const isArray = require('lodash/isArray');
 const {
   trace,
-} = require('../general_utils/ramda_utils');
+} = require('../ramda/trace');
 
 /**
  * @typedef  {Object} BoomErrorPayload - Boom error payload
