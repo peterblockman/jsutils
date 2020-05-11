@@ -1,7 +1,7 @@
 
 # javascript_utils
 Contains useful utils functions for javascript projects
-# Table of content
+# Utils
 1. parameter
 - Validating functions' parameters
 2. json_api 
