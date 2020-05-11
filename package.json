@@ -1,0 +1,28 @@
+{
+  "name": "javascript_utils",
+  "version": "1.0.0",
+  "description": "Javascript utils",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Peter Vu",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/boom": "^9.1.0",
+    "bluebird": "^3.7.2",
+    "bycontract": "^2.0.9",
+    "folktale": "^2.3.2",
+    "json-api-serializer": "^2.4.2",
+    "lodash": "^4.17.15",
+    "ramda": "^0.27.0",
+    "ramda-adjunct": "^2.26.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2",
+    "jest": "^26.0.1",
+    "jsdoc": "^3.6.4"
+  }
+}
