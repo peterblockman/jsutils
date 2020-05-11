@@ -5,7 +5,7 @@ Contains useful utils functions for javascript projects
 1. parameter
 - Validating functions' parameters
 2. json_api 
-Format data to JSONAPI 
+- Format data to JSONAPI 
 3. folktale 
 - folktale utils function s
 4. lodash 
@@ -17,7 +17,7 @@ Format data to JSONAPI
 7. general_utils
 - useful uncategorized utils functions
 # Installation
-## local
+## Local
 1. Create personal github access token \
 Go to [https://github.com/settings/tokens](https://github.com/settings/tokens) and create an access token with `repo` scope . Save the token in a secure place.
 2.  Setup url rewrite in ~/.gitconfig \
@@ -45,7 +45,7 @@ Set heroku-prebuild
 ...
   ```
 
-# development
+# Development
 ```
 npm install
 npm test
