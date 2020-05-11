@@ -22,7 +22,7 @@ Contains useful utils functions for javascript projects
 Go to [https://github.com/settings/tokens](https://github.com/settings/tokens) and create an access token with `repo` scope . Save the token in a secure place.
 2.  Setup url rewrite in ~/.gitconfig
 ```
-git config --global url."https://GITHUB_TOKEN:x-oauth-basic@github.com/".insteadOf https://x-oauth-basic@github.com/
+git config --global url."https://<GITHUB_TOKEN>:x-oauth-basic@github.com/".insteadOf https://x-oauth-basic@github.com/
 ```
 3. Install private repository \
 Verbose log level for debugging access errors.
@@ -30,7 +30,7 @@ Verbose log level for debugging access errors.
 npm install --loglevel verbose --save git+https://x-oauth-basic@github.com/<USERNAME>/<REPOSITORY>.git
 ```
 ## Heroku
-In the project where this repo installed on: 
+In the project (deployed to Heroku) where this repo installed on: 
 1. Set config var
 ```
 heroku config:set GITHUB_TOKEN=<token_value>
