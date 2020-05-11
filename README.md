@@ -20,12 +20,12 @@ Contains useful utils functions for javascript projects
 ## Local
 1. Create personal github access token \
 Go to [https://github.com/settings/tokens](https://github.com/settings/tokens) and create an access token with `repo` scope . Save the token in a secure place.
-2.  Setup url rewrite in ~/.gitconfig \
+2.  Setup url rewrite in ~/.gitconfig
 ```
 git config --global url."https://GITHUB_TOKEN:x-oauth-basic@github.com/".insteadOf https://x-oauth-basic@github.com/
 ```
 3. Install private repository \
-Verbose log level for debugging access errors.\
+Verbose log level for debugging access errors.
 ```
 npm install --loglevel verbose --save git+https://x-oauth-basic@github.com/<USERNAME>/<REPOSITORY>.git
 ```
