@@ -7,7 +7,7 @@ Contains useful utils functions for javascript projects
 2. json_api 
 - Format data to JSONAPI 
 3. folktale 
-- folktale utils function s
+- folktale utils functions
 4. lodash 
 -  More supports for function programming
  - Add folktale/result to some lodash functions
@@ -30,7 +30,7 @@ Verbose log level for debugging access errors.
 npm install --loglevel verbose --save git+https://x-oauth-basic@github.com/<USERNAME>/<REPOSITORY>.git
 ```
 ## Heroku
-In the project where this repo installed on
+In the project where this repo installed on: 
 1. Set config var
 ```
 heroku config:set GITHUB_TOKEN=<token_value>
