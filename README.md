@@ -1,4 +1,5 @@
 
+
 # javascript_utils
 Contains useful utils functions for javascript projects
 # Utils
@@ -17,8 +18,10 @@ Contains useful utils functions for javascript projects
 7. general_utils
 - useful uncategorized utils functions
 # Installation
-## Local
-1. Create personal github access token \
+## Private Github repository
+### Local
+
+1. Create personal Github access token \
 Go to [https://github.com/settings/tokens](https://github.com/settings/tokens) and create an access token with `repo` scope . Save the token in a secure place.
 2.  Setup url rewrite in ~/.gitconfig
 ```
@@ -44,7 +47,13 @@ Set heroku-prebuild
   }, 
 ...
   ```
-
+## Public Github repository
+### Local
+```
+npm install vietvu-nguyen/javascript_utils --save
+```
+## Heroku
+It will be automatically installed while deploying to Heroku
 # Development
 ```
 npm install
