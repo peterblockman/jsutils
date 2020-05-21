@@ -1,6 +1,5 @@
 const R = require('ramda');
 const Result = require('folktale/result');
-const isEmpty = require('lodash/isEmpty');
 const Boom = require('@hapi/boom');
 const { isInsatanceOfFolktaleResultOk, isInsatanceOfFolktaleResultError } = require('./instances');
 
@@ -36,7 +35,11 @@ const withFolktaleResultChainAsync = R.curry(
     )) {
       return Result.Error(Boom.badData('Input must be an instance of Result.Ok or Result.Error'));
     }
-    return result.chain(async (data) => Result.Ok(await asyncFunc(data)));
+    return result.chain(async (data) => {
+      const output = await asyncFunc(data);
+      if (Result.hasInstance(output)) return output;
+      return Result.Ok(output);
+    });
   },
 );
 /**
