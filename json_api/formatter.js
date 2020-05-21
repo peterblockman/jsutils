@@ -1,3 +1,7 @@
+class self {
+
+}
+module.exports = self;
 const R = require('ramda');
 const isPlainObject = require('lodash/isPlainObject');
 const isArray = require('lodash/isArray');
@@ -5,6 +9,7 @@ const isString = require('lodash/isString');
 const isEmpty = require('lodash/isEmpty');
 const Boom = require('@hapi/boom');
 const Result = require('folktale/result');
+const { deserialize } = require('json-api-deserialize');
 const { keepIncludedIfRequest } = require('./included_prop');
 /**
  * Serializing data to JSONAPI format
@@ -61,7 +66,36 @@ const serializeToJsonApiWithResult = R.curry(
     );
   },
 );
-module.exports = {
-  serializeToJsonApiWithResult,
-  serializeToJsonApi,
-};
+
+/**
+   * Deserialzed JsonAPI
+   * @param  {[type]}   onlyGetData      [description]
+   * @param  {[type]}   omitJsonApiProps [description]
+   * @param  {Function} dataResult)      [description]
+   * @return {[type]}                    [description]
+   */
+const createDeserializeJsonApi = R.curry(
+  (onlyGetData, omitJsonApiProps, dataResult) => dataResult.chain(
+    (data) => {
+      // TODO validate type error here
+      const deserializedData = R.pipe(
+        R.clone,
+        deserialize,
+        R.omit(omitJsonApiProps),
+        (jsonApiObject) => (
+          onlyGetData
+            ? R.prop('data', jsonApiObject)
+            : jsonApiObject
+        ),
+      )(data);
+      return Result.Ok(deserializedData);
+    },
+  ),
+);
+const deserializeJsonApi = createDeserializeJsonApi(false, ['jsonapi', 'links', 'deserialized']);
+const deserializeJsonApiAndGetOnlyData = createDeserializeJsonApi(true, ['jsonapi', 'links', 'deserialized']);
+
+self.serializeToJsonApiWithResult = serializeToJsonApiWithResult;
+self.serializeToJsonApi = serializeToJsonApi;
+self.deserializeJsonApi = deserializeJsonApi;
+self.deserializeJsonApiAndGetOnlyData = deserializeJsonApiAndGetOnlyData;

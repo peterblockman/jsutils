@@ -1,9 +1,20 @@
+const Result = require('folktale/result');
 const R = require('ramda');
+
 const {
   isInsatanceOfFolktaleResultOk,
 } = require('../../folktale/instances');
-const { serializeToJsonApiWithResult } = require('../formatter');
-const { Serializer, registerJsonApiMock, rawData } = require('./formatter_mocks');
+const {
+  serializeToJsonApiWithResult,
+  deserializeJsonApiAndGetOnlyData,
+  deserializeJsonApi,
+} = require('../formatter');
+const {
+  Serializer,
+  registerJsonApiMock,
+  rawData,
+  expectedDeserializedOutput,
+} = require('./formatter_mocks');
 const { jsonApiMockObject } = require('./include_mocks');
 
 describe('modules/json_api/formatter', () => {
@@ -48,6 +59,18 @@ describe('modules/json_api/formatter', () => {
         expect(item).toHaveProperty('meta');
         expect(item).toHaveProperty('links');
       })(R.flatten(outputData.data));
+    });
+  });
+  describe('deserializeJsonApiAndGetOnlyData', () => {
+    it('Should convert jsonapi data to normal data and get only data prop', () => {
+      const output = deserializeJsonApiAndGetOnlyData(Result.Ok(jsonApiMockObject));
+      expect(output.merge()).toStrictEqual(R.omit(['jsonapi', 'links', 'deserialized', 'meta'], expectedDeserializedOutput).data);
+    });
+  });
+  describe('deserializeJsonApi', () => {
+    it('Should convert jsonapi data to normal data', () => {
+      const output = deserializeJsonApi(Result.Ok(jsonApiMockObject));
+      expect(output.merge()).toStrictEqual(R.omit(['jsonapi', 'links', 'deserialized'], expectedDeserializedOutput));
     });
   });
 });
