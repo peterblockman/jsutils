@@ -49,7 +49,7 @@ describe('json_api/include', () => {
     });
   });
   describe('keepIncludedIfRequest', () => {
-    it('Should keep included props if request and jsonApiObjects is an array', () => {
+    it('Should keep included props if request and jsonApiDatas is an array', () => {
       const include = ['people'];
       const mockObjectsOutput = keepIncludedIfRequest(
         include,
@@ -61,7 +61,7 @@ describe('json_api/include', () => {
         expect(R.equals(types, include)).toBe(true);
       }, mockObjectsOutput);
     });
-    it('Should keep included props if include and jsonApiObjects is an object', () => {
+    it('Should keep included props if include and jsonApiDatas is an object', () => {
       const include = ['people'];
       const mockObjectOutput = keepIncludedIfRequest(include, jsonApiMockObject);
       const types = getOutputTypes(mockObjectOutput);

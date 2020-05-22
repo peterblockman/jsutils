@@ -9,14 +9,15 @@ const isString = require('lodash/isString');
 const isEmpty = require('lodash/isEmpty');
 const Boom = require('@hapi/boom');
 const Result = require('folktale/result');
-const { deserialize } = require('json-api-deserialize');
 const { keepIncludedIfRequest } = require('./included_prop');
+const { validateParameters } = require('../parameter/validate');
+
 /**
  * Serializing data to JSONAPI format
  * @param  {string|string[]} include - the properties that be included in included property
- * @param  {Function} jsonApiRegister - register function that has json-api-serializer's Serializer.register
- * @param  {[type]} jsonApiSerializer - serialize functionthat has json-api-serializer's Serializer.serialize
- * @param  {string} options.type  - json-api-serializer's type
+ * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
+ * @param  {import('./typedefs').JsonApiSerializer} jsonApiSerializer
+ * @param  {import('./typedefs').Type} options.type  - json-api-serializer's type
  * @param  {any} options.extraData - json-api-serializer' extraData
  * @param  {Object|Object[]} data  - the data to convert
  * @return {Object|Object[]}
@@ -35,9 +36,9 @@ const serializeToJsonApi = R.curry(
 /**
  * Serializing data to JSONAPI format and wrap it in foltale/result
  * @param  {string|string[]} include - the properties that be included in included property
- * @param  {Function} jsonApiRegister - register function that has json-api-serializer's Serializer.register
- * @param  {[type]} jsonApiSerializer - serialize functionthat has json-api-serializer's Serializer.serialize
- * @param  {string} options.type  - json-api-serializer's type
+ * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
+ * @param  {import('./typedefs').JsonApiSerializer} jsonApiSerializer
+ * @param  {import('./typedefs').Type} options.type
  * @param  {any} options.extraData - json-api-serializer' extraData
  * @param  {Object|Object[]} data  - the data to convert
  * @return {Object|Object[]}
@@ -61,7 +62,6 @@ const serializeToJsonApiWithResult = R.curry(
     return Result.Ok(
       serializeToJsonApi(
         include,
-        // jsonApiRegister,
         jsonApiSerializer,
         { type, extraData },
         data,
@@ -69,36 +69,76 @@ const serializeToJsonApiWithResult = R.curry(
     );
   },
 );
-
 /**
-   * Deserialzed JsonAPI
-   * @param  {[type]}   onlyGetData      [description]
-   * @param  {[type]}   omitJsonApiProps [description]
-   * @param  {Function} dataResult)      [description]
-   * @return {[type]}                    [description]
-   */
-const createDeserializeJsonApi = R.curry(
-  (onlyGetData, omitJsonApiProps, dataResult) => dataResult.chain(
-    (data) => {
-      // TODO validate type error here
-      const deserializedData = R.pipe(
-        R.clone,
-        deserialize,
-        R.omit(omitJsonApiProps),
-        (jsonApiObject) => (
-          onlyGetData
-            ? R.prop('data', jsonApiObject)
-            : jsonApiObject
-        ),
-      )(data);
-      return Result.Ok(deserializedData);
-    },
+ * [description]
+ * @param  {[type]} useNativeError [description]
+ * @param  {[type]} errorMessage   [description]
+ * @return {[type]}                [description]
+ */
+const getErrorType = R.curry(
+  (useNativeError, errorMessage) => (
+    useNativeError
+      ? new Error(errorMessage)
+      : Boom.badData(errorMessage)
   ),
 );
-const deserializeJsonApi = createDeserializeJsonApi(false, ['jsonapi', 'links', 'deserialized']);
-const deserializeJsonApiAndGetOnlyData = createDeserializeJsonApi(true, ['jsonapi', 'links', 'deserialized']);
+/**
+ * Deserialize jsonapi
+ * @param  {import('./typedefs').DeserializeConfig} config
+ * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
+ * @param  {import('./typedefs').Type} type
+ * @param  {import('./typedefs').JsonApiData} jsonApiData
+ * @return {import('./typedefs').JsonApiData
+ * & import('../folktale/typedefs').FolktaleResult} jsonApiData
+ */
+const deserializeJsonApi = R.curry(
+  (config, jsonApiSerializer, type, jsonApiData) => {
+    const typeErrors = validateParameters(
+      {
+        config, jsonApiSerializer, type, jsonApiData,
+      },
+      ['object', 'object', 'string', 'object|array'],
+    );
+    const { useNativeError } = config;
+    if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useNativeError, typeErrors));
+    const deserializedData = jsonApiSerializer.deserialize(type, jsonApiData);
+    return Result.Ok(deserializedData);
+  },
+);
+
+const deserializeJsonApiNativeError = deserializeJsonApi({ useNativeError: true });
+const deserializeJsonApiBoomError = deserializeJsonApi({ useNativeError: false });
+/**
+ * Deserialize jsonapi async
+ * @param  {import('./typedefs').DeserializeConfig} config
+ * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
+ * @param  {import('./typedefs').Type} type
+ * @param  {import('./typedefs').JsonApiData} jsonApiData
+ * @return {import('./typedefs').JsonApiData
+ * & import('../folktale/typedefs').FolktaleResult} jsonApiData
+ */
+const deserializeJsonApiAsync = R.curry(
+  async (config, jsonApiSerializer, type, jsonApiData) => {
+    const typeErrors = validateParameters(
+      {
+        config, jsonApiSerializer, type, jsonApiData,
+      },
+      ['object', 'object', 'string', 'object|array'],
+    );
+    const { useNativeError } = config;
+    if (!isEmpty(typeErrors)) return Result.Error(useNativeError(useNativeError, typeErrors));
+    const deserializedData = await jsonApiSerializer.deserializeAsync(type, jsonApiData);
+    return Result.Ok(deserializedData);
+  },
+);
+const deserializeJsonApiNativeErrorAsync = deserializeJsonApiAsync({ useNativeError: true });
+const deserializeJsonApiBoomErrorAsync = deserializeJsonApiAsync({ useNativeError: false });
 
 self.serializeToJsonApiWithResult = serializeToJsonApiWithResult;
 self.serializeToJsonApi = serializeToJsonApi;
 self.deserializeJsonApi = deserializeJsonApi;
-self.deserializeJsonApiAndGetOnlyData = deserializeJsonApiAndGetOnlyData;
+self.deserializeJsonApiAsync = deserializeJsonApiAsync;
+self.deserializeJsonApiNativeError = deserializeJsonApiNativeError;
+self.deserializeJsonApiBoomError = deserializeJsonApiBoomError;
+self.deserializeJsonApiNativeErrorAsync = deserializeJsonApiNativeErrorAsync;
+self.deserializeJsonApiBoomErrorAsync = deserializeJsonApiBoomErrorAsync;

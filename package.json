@@ -13,7 +13,6 @@
     "bluebird": "^3.7.2",
     "bycontract": "^2.0.9",
     "folktale": "^2.3.2",
-    "json-api-deserialize": "0.0.4",
     "json-api-serializer": "^2.4.2",
     "lodash": "^4.17.15",
     "ramda": "^0.27.0",

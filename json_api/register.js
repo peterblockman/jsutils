@@ -7,7 +7,12 @@ const isEmpty = require('lodash/isEmpty');
 const Result = require('folktale/result');
 const Boom = require('@hapi/boom');
 const { validateParameters } = require('../parameter/validate');
-
+/**
+ * jsonapi register
+ * @param  {import('./typedefs').JsonAPiSerializer} jsonApiSerializer
+ * @param  {import('./typedefs').RegisterItem} registerData
+ * @return {import('./typedefs').JsonAPiSerializer}
+ */
 const registerJsonApi = R.curry(
   (jsonApiSerializer, registerItem) => {
     const { type, schema, options } = registerItem;
@@ -16,6 +21,13 @@ const registerJsonApi = R.curry(
       : jsonApiSerializer.register(type, schema, options);
   },
 );
+/**
+ * Generate jsonapi register
+ * @param  {import('./typedefs').JsonAPiSerializer} jsonApiSerializer
+ * @param  {import('./typedefs').RegisterItem} registerData
+ * @return  @return {import('./typedefs').JsonApiRegister
+ * & import('../folktale/typedefs').FolktaleResult} jsonApiRegister
+ */
 const gerenateJsonApiRegister = R.curry(
   (jsonApiSerializer, registerData) => {
     const typeErrors = validateParameters(

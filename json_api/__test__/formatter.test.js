@@ -1,19 +1,24 @@
 const Result = require('folktale/result');
 const R = require('ramda');
+const Boom = require('@hapi/boom');
 
+const JSONAPISerializer = require('json-api-serializer');
 const {
   isInsatanceOfFolktaleResultOk,
+  isInsatanceOfFolktaleResultError,
 } = require('../../folktale/instances');
 const {
   serializeToJsonApiWithResult,
-  deserializeJsonApiAndGetOnlyData,
   deserializeJsonApi,
+  // deserializeJsonApi,
 } = require('../formatter');
 const {
   Serializer,
   rawData,
   expectedDeserializedOutput,
+  type,
 } = require('./formatter_mocks');
+
 const { jsonApiMockObject } = require('./include_mocks');
 
 describe('modules/json_api/formatter', () => {
@@ -24,7 +29,7 @@ describe('modules/json_api/formatter', () => {
         [],
         Serializer,
         {
-          type: 'article',
+          type,
           extraData: { count: 2 },
         },
         rawData,
@@ -39,7 +44,7 @@ describe('modules/json_api/formatter', () => {
         ['people'],
         Serializer,
         {
-          type: 'article',
+          type,
           extraData: { count: 2 },
         },
         [rawData, rawData],
@@ -58,16 +63,45 @@ describe('modules/json_api/formatter', () => {
       })(R.flatten(outputData.data));
     });
   });
-  describe('deserializeJsonApiAndGetOnlyData', () => {
-    it('Should convert jsonapi data to normal data and get only data prop', () => {
-      const output = deserializeJsonApiAndGetOnlyData(Result.Ok(jsonApiMockObject));
-      expect(output.merge()).toStrictEqual(R.omit(['jsonapi', 'links', 'deserialized', 'meta'], expectedDeserializedOutput).data);
-    });
-  });
   describe('deserializeJsonApi', () => {
-    it('Should convert jsonapi data to normal data', () => {
-      const output = deserializeJsonApi(Result.Ok(jsonApiMockObject));
-      expect(output.merge()).toStrictEqual(R.omit(['jsonapi', 'links', 'deserialized'], expectedDeserializedOutput));
+    it('Should deserialize jsonapi data (useNativeError true)', () => {
+      const config = {
+        useNativeError: true,
+      };
+      const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
+      expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
+      expect(output.merge()).toStrictEqual(expectedDeserializedOutput);
+    });
+
+    it('Should return Result.Error data when type is invalid (useNativeError true)', () => {
+      const config = {
+        useNativeError: true,
+      };
+      const type = 1;
+      const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
+      expect(isInsatanceOfFolktaleResultError(output)).toBe(true);
+      const error = output.merge();
+      expect(error instanceof Error).toBe(true);
+      expect(error.message).toBe('type expected string but got number');
+    });
+    it('Should deserialize jsonapi data (useNativeError false)', () => {
+      const config = {
+        useNativeError: false,
+      };
+      const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
+      expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
+      expect(output.merge()).toStrictEqual(expectedDeserializedOutput);
+    });
+    it('Should return Result.Error data when type is invalid (useNativeError true)', () => {
+      const config = {
+        useNativeError: false,
+      };
+      const type = 1;
+      const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
+      expect(isInsatanceOfFolktaleResultError(output)).toBe(true);
+      const error = output.merge();
+      expect(Boom.isBoom(error)).toBe(true);
+      expect(error.message).toBe('type expected string but got number');
     });
   });
 });

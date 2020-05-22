@@ -1,13 +1,13 @@
 const R = require('ramda');
 
 const flattenDataProp = R.curry(
-  (jsonApiObject) => {
+  (jsonApiData) => {
     const setData = R.flip(R.set(R.lensProp('data')));
     return R.pipe(
       R.prop('data'),
       R.flatten,
-      setData(jsonApiObject),
-    )(jsonApiObject);
+      setData(jsonApiData),
+    )(jsonApiData);
   },
 );
 module.exports = {
