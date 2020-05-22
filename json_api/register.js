@@ -74,7 +74,7 @@ const fetchAndRegisterJsonApiNativeError = R.curry(
 const fetchAndRegisterJsonApiBoomError = R.curry(
   async (url, jsonApiSerializer) => pipeAwait(
     axiosGet(url),
-    gerenateJsonApiRegisterNativeError(jsonApiSerializer),
+    gerenateJsonApiRegisterBoomError(jsonApiSerializer),
   ),
 );
 self.createGerenateJsonApiRegister = createGerenateJsonApiRegister;
