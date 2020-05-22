@@ -11,7 +11,6 @@ const {
 } = require('../formatter');
 const {
   Serializer,
-  registerJsonApiMock,
   rawData,
   expectedDeserializedOutput,
 } = require('./formatter_mocks');
@@ -23,7 +22,6 @@ describe('modules/json_api/formatter', () => {
     it('Shoud serialize to json api and return a Result.Ok when data is an object', () => {
       const output = serializeToJsonApiWithResult(
         [],
-        registerJsonApiMock,
         Serializer,
         {
           type: 'article',
@@ -39,7 +37,6 @@ describe('modules/json_api/formatter', () => {
     it('Shoud serialize to json api and return a Result.Ok when data is an array', () => {
       const output = serializeToJsonApiWithResult(
         ['people'],
-        registerJsonApiMock,
         Serializer,
         {
           type: 'article',

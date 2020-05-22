@@ -22,8 +22,12 @@ const { keepIncludedIfRequest } = require('./included_prop');
  * @return {Object|Object[]}
  */
 const serializeToJsonApi = R.curry(
-  (include, jsonApiRegister, jsonApiSerializer, { type, extraData }, data) => {
-    jsonApiRegister(data);
+  (
+    include,
+    jsonApiSerializer,
+    { type, extraData },
+    data,
+  ) => {
     const serializedData = jsonApiSerializer.serialize(type, data, extraData);
     return keepIncludedIfRequest(include, serializedData);
   },
@@ -41,7 +45,6 @@ const serializeToJsonApi = R.curry(
 const serializeToJsonApiWithResult = R.curry(
   (
     include,
-    jsonApiRegister,
     jsonApiSerializer,
     { type, extraData },
     data,
@@ -58,7 +61,7 @@ const serializeToJsonApiWithResult = R.curry(
     return Result.Ok(
       serializeToJsonApi(
         include,
-        jsonApiRegister,
+        // jsonApiRegister,
         jsonApiSerializer,
         { type, extraData },
         data,
