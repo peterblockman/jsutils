@@ -27,7 +27,6 @@ const { trace } = require('../ramda/trace');
 const getMaxOfArray = (arrayData) => (
   Math.max.apply(Math, arrayData.data.map((o) => o[arrayData.key]))
 );
-const pipeAwait = (...functions) => (input) => functions.reduce((chain, func) => chain.then(func), Promise.resolve(input));
 // TODO change it so it is easier to scale
 const groupQueryResult = (
   lv1GroupBy,
@@ -335,7 +334,6 @@ const isStringWithComma = isStringWithDelimeter(',');
 
 module.exports = {
   getMaxOfArray,
-  pipeAwait,
   groupQueryResult,
   getWhereInArray,
   groupData,

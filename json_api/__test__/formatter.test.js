@@ -11,6 +11,7 @@ const {
   serializeToJsonApiWithResult,
   deserializeJsonApi,
   // deserializeJsonApi,
+  createSerializeToJsonApi,
 } = require('../formatter');
 const {
   Serializer,
@@ -22,10 +23,13 @@ const {
 const { jsonApiMockObject } = require('./include_mocks');
 
 describe('modules/json_api/formatter', () => {
-  describe('serializeToJsonApiWithResult', () => {
+  describe('createSerializeToJsonApi', () => {
     const objectKeys = ['jsonapi', 'meta', 'links', 'data'];
-    it('Shoud serialize to json api and return a Result.Ok when data is an object', () => {
-      const output = serializeToJsonApiWithResult(
+    it('Shoud serialize to json api and return a Result.Ok when data is an object (useNativeError false)', () => {
+      const output = createSerializeToJsonApi(
+        {
+          useNativeError: false,
+        },
         [],
         Serializer,
         {
@@ -39,8 +43,11 @@ describe('modules/json_api/formatter', () => {
       expect(output.merge().data).toMatchObject(jsonApiMockObject.data);
       expect(output.merge().data).not.toHaveProperty('included');
     });
-    it('Shoud serialize to json api and return a Result.Ok when data is an array', () => {
-      const output = serializeToJsonApiWithResult(
+    it('Shoud serialize to json api and return a Result.Ok when data is an array (useNativeError false)', () => {
+      const output = createSerializeToJsonApi(
+        {
+          useNativeError: false,
+        },
         ['people'],
         Serializer,
         {
