@@ -9,7 +9,7 @@ const { validateParameters } = require('../parameter/validate');
 const { getErrorType } = require('./utils');
 const { pipeAwait } = require('../ramda/pipe');
 const { axiosGet } = require('../axios/request');
-
+const { withFolktaleResultChain } = require('../folktale/add_result');
 /**
  * jsonapi register
  * @param  {import('./typedefs').JsonAPiSerializer} jsonApiSerializer
@@ -60,7 +60,9 @@ const gerenateJsonApiRegisterBoomError = createGerenateJsonApiRegister({ useNati
 const fetchAndRegisterJsonApiNativeError = R.curry(
   async (url, jsonApiSerializer) => pipeAwait(
     axiosGet(url),
-    gerenateJsonApiRegisterNativeError(jsonApiSerializer),
+    withFolktaleResultChain(
+      gerenateJsonApiRegisterNativeError(jsonApiSerializer),
+    ),
   ),
 );
 /**
@@ -74,7 +76,9 @@ const fetchAndRegisterJsonApiNativeError = R.curry(
 const fetchAndRegisterJsonApiBoomError = R.curry(
   async (url, jsonApiSerializer) => pipeAwait(
     axiosGet(url),
-    gerenateJsonApiRegisterBoomError(jsonApiSerializer),
+    withFolktaleResultChain(
+      gerenateJsonApiRegisterBoomError(jsonApiSerializer),
+    ),
   ),
 );
 self.createGerenateJsonApiRegister = createGerenateJsonApiRegister;

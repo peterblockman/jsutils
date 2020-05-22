@@ -18,7 +18,11 @@ const withFolktaleResultChain = R.curry(
     )) {
       return Result.Error(Boom.badData('Input must be an instance of Result.Ok or Result.Error'));
     }
-    return result.chain((data) => Result.Ok(func(data)));
+    return result.chain((data) => {
+      const output = func(data);
+      if (Result.hasInstance(output)) return output;
+      return Result.Ok(output);
+    });
   },
 );
 /**
