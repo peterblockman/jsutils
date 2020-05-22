@@ -5,8 +5,11 @@ module.exports = self;
 const R = require('ramda');
 const isEmpty = require('lodash/isEmpty');
 const Result = require('folktale/result');
-const Boom = require('@hapi/boom');
 const { validateParameters } = require('../parameter/validate');
+const { getErrorType } = require('./utils');
+const { pipeAwait } = require('../ramda/pipe');
+const { axiosGet } = require('../axios/request');
+
 /**
  * jsonapi register
  * @param  {import('./typedefs').JsonAPiSerializer} jsonApiSerializer
@@ -28,15 +31,54 @@ const registerJsonApi = R.curry(
  * @return  @return {import('./typedefs').JsonApiRegister
  * & import('../folktale/typedefs').FolktaleResult} jsonApiRegister
  */
-const gerenateJsonApiRegister = R.curry(
-  (jsonApiSerializer, registerData) => {
+const createGerenateJsonApiRegister = R.curry(
+  (config, jsonApiSerializer, registerData) => {
     const typeErrors = validateParameters(
       { registerData },
       ['array'],
     );
-    if (!isEmpty(typeErrors)) return Result.Error(Boom.badData(typeErrors));
+    const { useNativeError } = config;
+    if (!isEmpty(typeErrors)) {
+      return Result.Error(
+        getErrorType(useNativeError, 'badData', typeErrors),
+      );
+    }
     R.map(registerJsonApi(jsonApiSerializer))(registerData);
     return Result.Ok(jsonApiSerializer);
   },
 );
-self.gerenateJsonApiRegister = gerenateJsonApiRegister;
+const gerenateJsonApiRegisterNativeError = createGerenateJsonApiRegister({ useNativeError: true });
+const gerenateJsonApiRegisterBoomError = createGerenateJsonApiRegister({ useNativeError: false });
+/**
+ * Fetch register data and register jsonapi's types
+ * return a native Error if failed
+ * @param {string} url
+ * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
+ * @return {import('./typedefs').JsonApiRegister
+ * & import('../folktale/typedefs').FolktaleResult} jsonApiSerializer
+ */
+const fetchAndRegisterJsonApiNativeError = R.curry(
+  async (url, jsonApiSerializer) => pipeAwait(
+    axiosGet(url),
+    gerenateJsonApiRegisterNativeError(jsonApiSerializer),
+  ),
+);
+/**
+ * Fetch register data and register jsonapi's types
+ * return a Boom Error if failed
+ * @param {string} url
+ * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
+ * @return {import('./typedefs').JsonApiRegister
+ * & import('../folktale/typedefs').FolktaleResult} jsonApiSerializer
+ */
+const fetchAndRegisterJsonApiBoomError = R.curry(
+  async (url, jsonApiSerializer) => pipeAwait(
+    axiosGet(url),
+    gerenateJsonApiRegisterNativeError(jsonApiSerializer),
+  ),
+);
+self.createGerenateJsonApiRegister = createGerenateJsonApiRegister;
+self.gerenateJsonApiRegisterNativeError = gerenateJsonApiRegisterNativeError;
+self.gerenateJsonApiRegisterBoomError = gerenateJsonApiRegisterBoomError;
+self.fetchAndRegisterJsonApiNativeError = fetchAndRegisterJsonApiNativeError;
+self.fetchAndRegisterJsonApiBoomError = fetchAndRegisterJsonApiBoomError;

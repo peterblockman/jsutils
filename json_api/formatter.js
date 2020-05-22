@@ -7,25 +7,13 @@ const isPlainObject = require('lodash/isPlainObject');
 const isArray = require('lodash/isArray');
 const isString = require('lodash/isString');
 const isEmpty = require('lodash/isEmpty');
-const Boom = require('@hapi/boom');
 const Result = require('folktale/result');
 const { keepIncludedIfRequest } = require('./included_prop');
 const { validateParameters } = require('../parameter/validate');
 const { pipeAwait } = require('../ramda/pipe');
 const { axiosGet } = require('../axios/request');
-/**
- * [description]
- * @param  {[type]} useNativeError [description]
- * @param  {[type]} errorMessage   [description]
- * @return {[type]}                [description]
- */
-const getErrorType = R.curry(
-  (useNativeError, BoomErrorType, errorMessage) => (
-    useNativeError
-      ? new Error(errorMessage)
-      : Boom[BoomErrorType](errorMessage)
-  ),
-);
+const { getErrorType } = require('./utils');
+
 /**
  * Serializing data to JSONAPI format
  * @param  {string|string[]} include - the properties that be included in included property
@@ -105,60 +93,6 @@ const createSerializeToJsonApi = R.curry(
 const serializeToJsonApiNativeError = createSerializeToJsonApi({ useNativeError: true });
 const serializeToJsonApiBoomError = createSerializeToJsonApi({ useNativeError: false });
 /**
- * Fetch register data and serialize jsonapi
- * return a native Error if failed
- * @param {string} url
- * @param  {import('./typedefs').DeserializeConfig} config
- * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
- * @param  {import('./typedefs').Type} type
- * @param  {import('./typedefs').JsonApiData} jsonApiData
- * @return {import('./typedefs').JsonApiData
- * & import('../folktale/typedefs').FolktaleResult} jsonApiData
- */
-const fetchRegisterAndSerializeJsonApiNativeError = R.curry(
-  async (
-    url,
-    include,
-    jsonApiSerializer,
-    { type, extraData },
-    data,
-  ) => pipeAwait(
-    axiosGet(url),
-    serializeToJsonApiNativeError(include,
-      jsonApiSerializer,
-      { type, extraData },
-      data),
-  ),
-);
-/**
- * Fetch register data and serialize jsonapi
- * return a Boom Error if failed
- * @param {string} url
- * @param  {import('./typedefs').DeserializeConfig} config
- * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
- * @param  {import('./typedefs').Type} type
- * @param  {import('./typedefs').JsonApiData} jsonApiData
- * @return {import('./typedefs').JsonApiData
- * & import('../folktale/typedefs').FolktaleResult} jsonApiData
- */
-const fetchRegisterAndSerializeJsonApiBoomError = R.curry(
-  async (
-    url,
-    include,
-    jsonApiSerializer,
-    { type, extraData },
-    data,
-  ) => pipeAwait(
-    axiosGet(url),
-    serializeToJsonApiBoomError(
-      include,
-      jsonApiSerializer,
-      { type, extraData },
-      data,
-    ),
-  ),
-);
-/**
  * Deserialize jsonapi
  * @param  {import('./typedefs').DeserializeConfig} config
  * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
@@ -210,40 +144,6 @@ const deserializeJsonApiAsync = R.curry(
 const deserializeJsonApiNativeErrorAsync = deserializeJsonApiAsync({ useNativeError: true });
 const deserializeJsonApiBoomErrorAsync = deserializeJsonApiAsync({ useNativeError: false });
 
-/**
- * Fetch register data and deserialize jsonapi
- * return a native Error if failed
- * @param {string} url
- * @param  {import('./typedefs').DeserializeConfig} config
- * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
- * @param  {import('./typedefs').Type} type
- * @param  {import('./typedefs').JsonApiData} jsonApiData
- * @return {import('./typedefs').JsonApiData
- * & import('../folktale/typedefs').FolktaleResult} jsonApiData
- */
-const fetchRegisterAndDeserializeJsonApiNativeError = R.curry(
-  async (url, jsonApiSerializer, type, jsonApiData) => pipeAwait(
-    axiosGet(url),
-    deserializeJsonApiNativeErrorAsync(jsonApiSerializer, type, jsonApiData),
-  ),
-);
-/**
- * Fetch register data and deserialize jsonapi
- * return a Boom Error if failed
- * @param {string} url
- * @param  {import('./typedefs').DeserializeConfig} config
- * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
- * @param  {import('./typedefs').Type} type
- * @param  {import('./typedefs').JsonApiData} jsonApiData
- * @return {import('./typedefs').JsonApiData
- * & import('../folktale/typedefs').FolktaleResult} jsonApiData
- */
-const fetchRegisterAndDeserializeJsonApiBoomError = R.curry(
-  async (url, jsonApiSerializer, type, jsonApiData) => pipeAwait(
-    axiosGet(url),
-    deserializeJsonApiBoomErrorAsync(jsonApiSerializer, type, jsonApiData),
-  ),
-);
 self.createSerializeToJsonApi = createSerializeToJsonApi;
 self.serializeToJsonApiNativeError = serializeToJsonApiNativeError;
 self.serializeToJsonApiBoomError = serializeToJsonApiBoomError;
@@ -254,7 +154,3 @@ self.deserializeJsonApiNativeError = deserializeJsonApiNativeError;
 self.deserializeJsonApiBoomError = deserializeJsonApiBoomError;
 self.deserializeJsonApiNativeErrorAsync = deserializeJsonApiNativeErrorAsync;
 self.deserializeJsonApiBoomErrorAsync = deserializeJsonApiBoomErrorAsync;
-self.fetchRegisterAndDeserializeJsonApiNativeError = fetchRegisterAndDeserializeJsonApiNativeError;
-self.fetchRegisterAndDeserializeJsonApiBoomError = fetchRegisterAndDeserializeJsonApiBoomError;
-self.fetchRegisterAndSerializeJsonApiNativeError = fetchRegisterAndSerializeJsonApiNativeError;
-self.fetchRegisterAndSerializeJsonApiBoomError = fetchRegisterAndSerializeJsonApiBoomError;
