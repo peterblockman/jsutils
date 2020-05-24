@@ -26,8 +26,8 @@ const getErrorType = R.curry(
  * condition:
  * - is instance of Result.Ok
  * - schemas is not empty
- * @param  {import('./typedefs').JsonApiSerializer} jsonApiSerializer [description]
- * @return {[type]}                  [description]
+ * @param  {import('./typedefs').JsonApiSerializer} jsonApiSerializer
+ * @return {boolean} it is not necessary to return a Result here as it only return boolean
  */
 const isJsonApiRegisteringSuccessful = R.curry(
   (jsonApiSerializer) => {
