@@ -1,16 +1,12 @@
-const Result = require('folktale/result');
 const R = require('ramda');
 const Boom = require('@hapi/boom');
-
-const JSONAPISerializer = require('json-api-serializer');
+const Result = require('folktale/result');
 const {
   isInsatanceOfFolktaleResultOk,
   isInsatanceOfFolktaleResultError,
 } = require('../../folktale/instances');
 const {
-  serializeToJsonApiWithResult,
   deserializeJsonApi,
-  // deserializeJsonApi,
   createSerializeToJsonApi,
 } = require('../formatter');
 const {
@@ -18,13 +14,13 @@ const {
   rawData,
   expectedDeserializedOutput,
   type,
+  objectKeys,
 } = require('./formatter_mocks');
 
 const { jsonApiMockObject } = require('./include_mocks');
 
 describe('modules/json_api/formatter', () => {
   describe('createSerializeToJsonApi', () => {
-    const objectKeys = ['jsonapi', 'meta', 'links', 'data'];
     it('Shoud serialize to json api and return a Result.Ok when data is an object (useGenericError false)', () => {
       const output = createSerializeToJsonApi(
         {
@@ -36,7 +32,7 @@ describe('modules/json_api/formatter', () => {
           type,
           extraData: { count: 2 },
         },
-        rawData,
+        Result.Ok(rawData),
       );
       expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
       expect(R.keys(output.merge())).toMatchObject(objectKeys);
@@ -54,7 +50,7 @@ describe('modules/json_api/formatter', () => {
           type,
           extraData: { count: 2 },
         },
-        [rawData, rawData],
+        Result.Ok([rawData, rawData]),
       );
       expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
       const outputData = output.merge();

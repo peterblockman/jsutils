@@ -49,47 +49,43 @@ const createSerializeToJsonApi = R.curry(
     include,
     jsonApiSerializer,
     { type, extraData },
-    data,
-  ) => {
-    const typeErrors = validateParameters(
-      {
-        config, jsonApiSerializer, type, extraData, data,
-      },
-      ['object', 'object', 'string', '*', 'object|array'],
-    );
-    const { useGenericError } = config;
-    if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
-    if (isEmpty(data)) {
-      return Result.Error(
-        getErrorType(useGenericError, 'notFound', 'JSONAPI: No data provided'),
+    dataResult,
+  ) => dataResult.chain(
+    (data) => {
+      const typeErrors = validateParameters(
+        {
+          config, jsonApiSerializer, type, extraData, data,
+        },
+        ['object', 'object', 'string', '*', 'object|array'],
       );
-    }
-    if (!isArray(data) && !isPlainObject(data)) {
-      return Result.Error(getErrorType(
-        useGenericError,
-        'badData',
-        'Data\'s type for JSONAPI serializing not supported',
-      ));
-    }
-    if (!isString(type)) {
-      return Result.Error(getErrorType(
-        useGenericError,
-        'badData',
-        'type property not found in {type, extraData}',
-      ));
-    }
-    return Result.Ok(
-      handleSerializeToJsonApi(
-        include,
-        jsonApiSerializer,
-        { type, extraData },
-        data,
-      ),
-    );
-  },
+      const { useGenericError } = config;
+      if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
+      if (isEmpty(data)) {
+        return Result.Error(
+          getErrorType(useGenericError, 'notFound', 'JSONAPI: No data provided'),
+        );
+      }
+      if (isEmpty(type)) {
+        return Result.Error(getErrorType(
+          useGenericError,
+          'badData',
+          'type property not found in {type, extraData}',
+        ));
+      }
+      return Result.Ok(
+        handleSerializeToJsonApi(
+          include,
+          jsonApiSerializer,
+          { type, extraData },
+          data,
+        ),
+      );
+    },
+  ),
 );
 const serializeToJsonApiGenericError = createSerializeToJsonApi({ useGenericError: true });
 const serializeToJsonApiBoomError = createSerializeToJsonApi({ useGenericError: false });
+
 /**
  * Deserialize jsonapi
  * @param  {import('./typedefs').DeserializeConfig} config

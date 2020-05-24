@@ -48,12 +48,10 @@ const rawData = [
 const type = 'article';
 // Register 'article' type
 Serializer.register(type, {
-  id: 'id', // The attributes to use as the reference. Default = 'id'.
-  blacklist: ['updated'], // An array of blacklisted attributes. Default = []
+  id: 'id',
+  blacklist: ['updated'],
   links: {
-    // An object or a function that describes links.
     self(data) {
-      // Can be a function or a string value ex: { self: '/articles/1'}
       return `/articles/${data.id}`;
     },
   },
@@ -162,7 +160,8 @@ const expectedDeserializedOutput = [
     },
   },
 ];
-
+const objectKeys = ['jsonapi', 'meta', 'links', 'data'];
+self.objectKeys = objectKeys;
 self.Serializer = Serializer;
 self.rawData = rawData;
 self.expectedDeserializedOutput = expectedDeserializedOutput;
