@@ -9,6 +9,7 @@ const Result = require('folktale/result');
 const { pipeAwait } = require('../ramda/pipe');
 const { trace } = require('../ramda/trace');
 
+
 const extractAxiosData = (axiosResResult) => axiosResResult.chain(
   (axiosRes) => Result.Ok(axiosRes.data),
 );
@@ -50,25 +51,25 @@ const createAxiosRequest = R.curry(
 );
 // because many get request only need url, so we flip it
 const axiosGet = R.curry(
-  (url) => pipeAwait(
+  async (url) => pipeAwait(
     R.flip(createAxiosRequest('get'))({}),
     extractAxiosData,
   )(url),
 );
 const axiosPost = R.curry(
-  (url, config) => pipeAwait(
+  async (url, config) => pipeAwait(
     createAxiosRequest('post', url),
     extractAxiosData,
   )(config),
 );
 const axiosPut = R.curry(
-  (url, config) => pipeAwait(
+  async (url, config) => pipeAwait(
     createAxiosRequest('put', url),
     extractAxiosData,
   )(config),
 );
 const axiosPatch = R.curry(
-  (url, config) => pipeAwait(
+  async (url, config) => pipeAwait(
     createAxiosRequest('patch', url),
     extractAxiosData,
   )(config),

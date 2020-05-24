@@ -25,10 +25,10 @@ const { jsonApiMockObject } = require('./include_mocks');
 describe('modules/json_api/formatter', () => {
   describe('createSerializeToJsonApi', () => {
     const objectKeys = ['jsonapi', 'meta', 'links', 'data'];
-    it('Shoud serialize to json api and return a Result.Ok when data is an object (useNativeError false)', () => {
+    it('Shoud serialize to json api and return a Result.Ok when data is an object (useGenericError false)', () => {
       const output = createSerializeToJsonApi(
         {
-          useNativeError: false,
+          useGenericError: false,
         },
         [],
         Serializer,
@@ -43,10 +43,10 @@ describe('modules/json_api/formatter', () => {
       expect(output.merge().data).toMatchObject(jsonApiMockObject.data);
       expect(output.merge().data).not.toHaveProperty('included');
     });
-    it('Shoud serialize to json api and return a Result.Ok when data is an array (useNativeError false)', () => {
+    it('Shoud serialize to json api and return a Result.Ok when data is an array (useGenericError false)', () => {
       const output = createSerializeToJsonApi(
         {
-          useNativeError: false,
+          useGenericError: false,
         },
         ['people'],
         Serializer,
@@ -71,18 +71,18 @@ describe('modules/json_api/formatter', () => {
     });
   });
   describe('deserializeJsonApi', () => {
-    it('Should deserialize jsonapi data (useNativeError true)', () => {
+    it('Should deserialize jsonapi data (useGenericError true)', () => {
       const config = {
-        useNativeError: true,
+        useGenericError: true,
       };
       const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
       expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
       expect(output.merge()).toStrictEqual(expectedDeserializedOutput);
     });
 
-    it('Should return Result.Error data when type is invalid (useNativeError true)', () => {
+    it('Should return Result.Error data when type is invalid (useGenericError true)', () => {
       const config = {
-        useNativeError: true,
+        useGenericError: true,
       };
       const type = 1;
       const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
@@ -91,17 +91,17 @@ describe('modules/json_api/formatter', () => {
       expect(error instanceof Error).toBe(true);
       expect(error.message).toBe('type expected string but got number');
     });
-    it('Should deserialize jsonapi data (useNativeError false)', () => {
+    it('Should deserialize jsonapi data (useGenericError false)', () => {
       const config = {
-        useNativeError: false,
+        useGenericError: false,
       };
       const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
       expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
       expect(output.merge()).toStrictEqual(expectedDeserializedOutput);
     });
-    it('Should return Result.Error data when type is invalid (useNativeError true)', () => {
+    it('Should return Result.Error data when type is invalid (useGenericError true)', () => {
       const config = {
-        useNativeError: false,
+        useGenericError: false,
       };
       const type = 1;
       const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);

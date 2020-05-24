@@ -10,8 +10,6 @@ const isEmpty = require('lodash/isEmpty');
 const Result = require('folktale/result');
 const { keepIncludedIfRequest } = require('./included_prop');
 const { validateParameters } = require('../parameter/validate');
-const { pipeAwait } = require('../ramda/pipe');
-const { axiosGet } = require('../axios/request');
 const { getErrorType } = require('./utils');
 
 /**
@@ -59,23 +57,23 @@ const createSerializeToJsonApi = R.curry(
       },
       ['object', 'object', 'string', '*', 'object|array'],
     );
-    const { useNativeError } = config;
-    if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useNativeError, 'badData', typeErrors));
+    const { useGenericError } = config;
+    if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
     if (isEmpty(data)) {
       return Result.Error(
-        getErrorType(useNativeError, 'notFound', 'JSONAPI: No data provided'),
+        getErrorType(useGenericError, 'notFound', 'JSONAPI: No data provided'),
       );
     }
     if (!isArray(data) && !isPlainObject(data)) {
       return Result.Error(getErrorType(
-        useNativeError,
+        useGenericError,
         'badData',
         'Data\'s type for JSONAPI serializing not supported',
       ));
     }
     if (!isString(type)) {
       return Result.Error(getErrorType(
-        useNativeError,
+        useGenericError,
         'badData',
         'type property not found in {type, extraData}',
       ));
@@ -90,8 +88,8 @@ const createSerializeToJsonApi = R.curry(
     );
   },
 );
-const serializeToJsonApiNativeError = createSerializeToJsonApi({ useNativeError: true });
-const serializeToJsonApiBoomError = createSerializeToJsonApi({ useNativeError: false });
+const serializeToJsonApiGenericError = createSerializeToJsonApi({ useGenericError: true });
+const serializeToJsonApiBoomError = createSerializeToJsonApi({ useGenericError: false });
 /**
  * Deserialize jsonapi
  * @param  {import('./typedefs').DeserializeConfig} config
@@ -99,7 +97,7 @@ const serializeToJsonApiBoomError = createSerializeToJsonApi({ useNativeError: f
  * @param  {import('./typedefs').Type} type
  * @param  {import('./typedefs').JsonApiData} jsonApiData
  * @return {import('./typedefs').JsonApiData
- * & import('../folktale/typedefs').FolktaleResult} jsonApiData
+ * & import('../folktale/typedefs').FolktaleResult} jsonApiDataResult
  */
 const deserializeJsonApi = R.curry(
   (config, jsonApiSerializer, type, jsonApiData) => {
@@ -109,15 +107,15 @@ const deserializeJsonApi = R.curry(
       },
       ['object', 'object', 'string', 'object|array'],
     );
-    const { useNativeError } = config;
-    if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useNativeError, 'badData', typeErrors));
+    const { useGenericError } = config;
+    if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
     const deserializedData = jsonApiSerializer.deserialize(type, jsonApiData);
     return Result.Ok(deserializedData);
   },
 );
 
-const deserializeJsonApiNativeError = deserializeJsonApi({ useNativeError: true });
-const deserializeJsonApiBoomError = deserializeJsonApi({ useNativeError: false });
+const deserializeJsonApiGenericError = deserializeJsonApi({ useGenericError: true });
+const deserializeJsonApiBoomError = deserializeJsonApi({ useGenericError: false });
 /**
  * Deserialize jsonapi async
  * @param  {import('./typedefs').DeserializeConfig} config
@@ -125,7 +123,7 @@ const deserializeJsonApiBoomError = deserializeJsonApi({ useNativeError: false }
  * @param  {import('./typedefs').Type} type
  * @param  {import('./typedefs').JsonApiData} jsonApiData
  * @return {import('./typedefs').JsonApiData
- * & import('../folktale/typedefs').FolktaleResult} jsonApiData
+ * & import('../folktale/typedefs').FolktaleResult} jsonApiDataResult
  */
 const deserializeJsonApiAsync = R.curry(
   async (config, jsonApiSerializer, type, jsonApiData) => {
@@ -135,22 +133,22 @@ const deserializeJsonApiAsync = R.curry(
       },
       ['object', 'object', 'string', 'object|array'],
     );
-    const { useNativeError } = config;
-    if (!isEmpty(typeErrors)) return Result.Error(useNativeError(useNativeError, 'badData', typeErrors));
+    const { useGenericError } = config;
+    if (!isEmpty(typeErrors)) return Result.Error(useGenericError(useGenericError, 'badData', typeErrors));
     const deserializedData = await jsonApiSerializer.deserializeAsync(type, jsonApiData);
     return Result.Ok(deserializedData);
   },
 );
-const deserializeJsonApiNativeErrorAsync = deserializeJsonApiAsync({ useNativeError: true });
-const deserializeJsonApiBoomErrorAsync = deserializeJsonApiAsync({ useNativeError: false });
+const deserializeJsonApiGenericErrorAsync = deserializeJsonApiAsync({ useGenericError: true });
+const deserializeJsonApiBoomErrorAsync = deserializeJsonApiAsync({ useGenericError: false });
 
 self.createSerializeToJsonApi = createSerializeToJsonApi;
-self.serializeToJsonApiNativeError = serializeToJsonApiNativeError;
+self.serializeToJsonApiGenericError = serializeToJsonApiGenericError;
 self.serializeToJsonApiBoomError = serializeToJsonApiBoomError;
 self.handleSerializeToJsonApi = handleSerializeToJsonApi;
 self.deserializeJsonApi = deserializeJsonApi;
 self.deserializeJsonApiAsync = deserializeJsonApiAsync;
-self.deserializeJsonApiNativeError = deserializeJsonApiNativeError;
+self.deserializeJsonApiGenericError = deserializeJsonApiGenericError;
 self.deserializeJsonApiBoomError = deserializeJsonApiBoomError;
-self.deserializeJsonApiNativeErrorAsync = deserializeJsonApiNativeErrorAsync;
+self.deserializeJsonApiGenericErrorAsync = deserializeJsonApiGenericErrorAsync;
 self.deserializeJsonApiBoomErrorAsync = deserializeJsonApiBoomErrorAsync;

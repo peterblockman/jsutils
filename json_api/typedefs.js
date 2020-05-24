@@ -12,18 +12,23 @@ module.exports = self;
  */
 
 /**
- * @typedef {boolean} UseNativeError - if true use JS native Error
+ * @typedef {boolean} UseGenericError - if true use JS generic Error
  */
 
 /**
  * @typedef {Object} DeserializeConfig
- * @property {UseNativeError} useNativeError
+ * @property {UseGenericError} useGenericError
  */
 
 /**
  * @typedef {Object} JsonApiSerializer - instance from json-api-serializer
  * const JSONAPISerializer = require('json-api-serializer');
  * const Serializer = new JSONAPISerializer();
+ */
+/**
+ * @typedef {JsonApiSerializer
+ * & import('../folktale/typedefs').FolktaleResult} JsonApiSerializerResult - folktale result
+ * of JsonApiSerializer
  */
 
 /**
