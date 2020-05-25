@@ -5,8 +5,8 @@ const { returnResultOkOrErrorNotLogic } = require('../folktale/add_result');
  * Return a FolktaleResutl base on !Empty condiditon
  * @type {Boolean}
  */
-const isEmptyOkOrErrorNotLogic = returnResultOkOrErrorNotLogic(isEmpty);
+const returnResultOkOrErrorEmptyLogic = returnResultOkOrErrorNotLogic(isEmpty);
 
 module.exports = {
-  isEmptyOkOrErrorNotLogic,
+  returnResultOkOrErrorEmptyLogic,
 };
