@@ -48,16 +48,24 @@ const withFolktaleResultChainAsync = R.curry(
 );
 /**
  * Return Result Ok or Error base on a boolean value returned from conditionFunction
+ * sometime we has to pass a value instead of folktale/result
  * @param  {string|Object} errorMessage - error message to pass to Result.Error or it can be Boom.Error(errorMessage)
  * @param  {Function} conditionFunction - a function that take 1 argument and return boolean
  * @param  {any} value  - the value to pass to Reuslt.Ok
  * @return {FolktaleResult}
  */
 const returnResultOkOrError = R.curry(
-  (conditionFunction, errorMessage, value) => (
-    conditionFunction(value)
-      ? Result.Ok(value)
-      : Result.Error(errorMessage)),
+  (conditionFunction, errorMessage, value) => {
+    const getResult = (errorMessage, data) => (conditionFunction(data)
+      ? Result.Ok(data)
+      : Result.Error(errorMessage));
+    if (Result.hasInstance(value)) {
+      return value.chain(
+        (data) => getResult(errorMessage, data),
+      );
+    }
+    return getResult(errorMessage, value);
+  },
 );
 /**
  * Return Result Ok or Error base on a the boolean value
@@ -68,11 +76,19 @@ const returnResultOkOrError = R.curry(
  * @return {FolktaleResult}
  */
 const returnResultOkOrErrorNotLogic = R.curry(
-  (conditionFunction, errorMessage, value) => (
-    !conditionFunction(value)
-      ? Result.Ok(value)
-      : Result.Error(errorMessage)),
+  (conditionFunction, errorMessage, value) => {
+    const getResult = (errorMessage, data) => (!conditionFunction(data)
+      ? Result.Ok(data)
+      : Result.Error(errorMessage));
+    if (Result.hasInstance(value)) {
+      return value.chain(
+        (data) => getResult(errorMessage, data),
+      );
+    }
+    return getResult(errorMessage, value);
+  },
 );
+
 
 module.exports = {
   returnResultOkOrError,

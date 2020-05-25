@@ -3,15 +3,12 @@ class self {
 }
 module.exports = self;
 const R = require('ramda');
-const isPlainObject = require('lodash/isPlainObject');
-const isArray = require('lodash/isArray');
-const isString = require('lodash/isString');
 const isEmpty = require('lodash/isEmpty');
 const Result = require('folktale/result');
 const { keepIncludedIfRequest } = require('./included_prop');
 const { validateParameters } = require('../parameter/validate');
 const { getErrorType } = require('./utils');
-
+const { pipeAwait } = require('../ramda/pipe');
 /**
  * Serializing data to JSONAPI format
  * @param  {string|string[]} include - the properties that be included in included property
@@ -85,15 +82,27 @@ const createSerializeToJsonApi = R.curry(
 );
 const serializeToJsonApiGenericError = createSerializeToJsonApi({ useGenericError: true });
 const serializeToJsonApiBoomError = createSerializeToJsonApi({ useGenericError: false });
-
+/**
+ * deserialize data into json api
+ * @param  {import('./typedefs').DeserializeConfig} config
+ * @param  {import('./typedefs').Type} type
+ * @param  {import('./typedefs').JsonApiData} jsonApiData
+ * @return {import('./typedefs').JsonApiData} deserialized json api
+ */
+const handleDeserializeJsonApi = R.curry(
+  (jsonApiSerializer, type, jsonApiData) => {
+    const deserializedData = jsonApiSerializer.deserialize(type, jsonApiData);
+    return Result.Ok(deserializedData);
+  },
+);
 /**
  * Deserialize jsonapi
  * @param  {import('./typedefs').DeserializeConfig} config
  * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
  * @param  {import('./typedefs').Type} type
  * @param  {import('./typedefs').JsonApiData} jsonApiData
- * @return {import('./typedefs').JsonApiData
- * & import('../folktale/typedefs').FolktaleResult} jsonApiDataResult
+ * @return {import('./typedefs').JsonApiData | import('./typedefs').JsonApiData
+ * & import('../folktale/typedefs').FolktaleResult } jsonApiDataResult
  */
 const deserializeJsonApi = R.curry(
   (config, jsonApiSerializer, type, jsonApiData) => {
@@ -105,13 +114,31 @@ const deserializeJsonApi = R.curry(
     );
     const { useGenericError } = config;
     if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
-    const deserializedData = jsonApiSerializer.deserialize(type, jsonApiData);
-    return Result.Ok(deserializedData);
+
+    if (!Result.hasInstance(jsonApiData)) {
+      return handleDeserializeJsonApi(jsonApiSerializer, type, jsonApiData);
+    }
+    return jsonApiData.chain(
+      (data) => handleDeserializeJsonApi(jsonApiSerializer, type, jsonApiData),
+    );
   },
 );
 
 const deserializeJsonApiGenericError = deserializeJsonApi({ useGenericError: true });
 const deserializeJsonApiBoomError = deserializeJsonApi({ useGenericError: false });
+/**
+ * deserialize data  async into json api
+ * @param  {import('./typedefs').DeserializeConfig} config
+ * @param  {import('./typedefs').Type} type
+ * @param  {import('./typedefs').JsonApiData} jsonApiData
+ * @return {import('./typedefs').JsonApiData} deserialized json api
+ */
+const handleDeserializeJsonApiAsync = R.curry(
+  async (jsonApiSerializer, type, jsonApiData) => {
+    const deserializedData = await jsonApiSerializer.deserializeAsync(type, jsonApiData);
+    return Result.Ok(deserializedData);
+  },
+);
 /**
  * Deserialize jsonapi async
  * @param  {import('./typedefs').DeserializeConfig} config
@@ -131,8 +158,21 @@ const deserializeJsonApiAsync = R.curry(
     );
     const { useGenericError } = config;
     if (!isEmpty(typeErrors)) return Result.Error(useGenericError(useGenericError, 'badData', typeErrors));
-    const deserializedData = await jsonApiSerializer.deserializeAsync(type, jsonApiData);
-    return Result.Ok(deserializedData);
+    if (!Result.hasInstance(jsonApiData)) {
+      return handleDeserializeJsonApiAsync(jsonApiSerializer, type, jsonApiData);
+    }
+    return jsonApiData.chain(
+      async (data) => {
+        const typeErrors = validateParameters(
+          {
+            data,
+          },
+          ['object|array'],
+        );
+        if (!isEmpty(typeErrors)) return Result.Error(useGenericError(useGenericError, 'badData', typeErrors));
+        return handleDeserializeJsonApiAsync(jsonApiSerializer, type, jsonApiData);
+      },
+    );
   },
 );
 const deserializeJsonApiGenericErrorAsync = deserializeJsonApiAsync({ useGenericError: true });
