@@ -157,7 +157,7 @@ const deserializeJsonApiAsync = R.curry(
       ['object', 'object', 'string', 'object|array'],
     );
     const { useGenericError } = config;
-    if (!isEmpty(typeErrors)) return Result.Error(useGenericError(useGenericError, 'badData', typeErrors));
+    if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
     if (!Result.hasInstance(jsonApiData)) {
       return handleDeserializeJsonApiAsync(jsonApiSerializer, type, jsonApiData);
     }
