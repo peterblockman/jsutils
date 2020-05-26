@@ -119,7 +119,7 @@ const deserializeJsonApi = R.curry(
       return handleDeserializeJsonApi(jsonApiSerializer, type, jsonApiData);
     }
     return jsonApiData.chain(
-      (data) => handleDeserializeJsonApi(jsonApiSerializer, type, jsonApiData),
+      (data) => handleDeserializeJsonApi(jsonApiSerializer, type, data),
     );
   },
 );
@@ -170,7 +170,7 @@ const deserializeJsonApiAsync = R.curry(
           ['object|array'],
         );
         if (!isEmpty(typeErrors)) return Result.Error(useGenericError(useGenericError, 'badData', typeErrors));
-        return handleDeserializeJsonApiAsync(jsonApiSerializer, type, jsonApiData);
+        return handleDeserializeJsonApiAsync(jsonApiSerializer, type, data);
       },
     );
   },
