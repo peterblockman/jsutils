@@ -26,8 +26,9 @@ const doesConfigContainData = R.curry(
 const shouldAddDataToConfig = R.curry(
   (config) => !isEmpty(config) && !doesConfigContainData(config),
 );
+
 /**
- *
+ * Handle axios request
  * @param  {string} method <get, post, put, patch,..> - all axios's method
  * @param  {string} url - api endpoint
  * @param  {Object} config contains data and other axios configs - similar
@@ -36,7 +37,7 @@ const shouldAddDataToConfig = R.curry(
  * Note that in many cases we only need to pass data,
  * that is why we check doesConfigContainData
  */
-const createAxiosRequest = R.curry(
+const handleAxiosRequest = R.curry(
   async (method, url, config) => {
     try {
       const configToUse = shouldAddDataToConfig(config)
@@ -47,6 +48,24 @@ const createAxiosRequest = R.curry(
     } catch (error) {
       return Result.Error(error);
     }
+  },
+);
+/**
+ * create axios request
+ * @param  {string} method <get, post, put, patch,..> - all axios's method
+ * @param  {string} url - api endpoint
+ * @param  {Object|FolktaleResult} config contains data and other axios configs - similar
+ * to axios object but doesnot contain url property
+ * @return {Object} axios's response object
+ * Note that in many cases we only need to pass data,
+ * that is why we check doesConfigContainData
+ */
+const createAxiosRequest = R.curry(
+  async (method, url, config) => {
+    if (!Result.hasInstance(config)) return handleAxiosRequest(method, url, config);
+    return config.chain(
+      async (configData) => handleAxiosRequest(method, url, configData),
+    );
   },
 );
 // because many get request only need url, so we flip it
