@@ -179,7 +179,11 @@ const handleDeserializeJsonApiAsync = R.curry(
  * & import('../folktale/typedefs').FolktaleResult} jsonApiDataResult
  */
 const deserializeJsonApiAsync = R.curry(
-  async (config, jsonApiSerializer, type, jsonApiData) => {
+  async (
+    config,
+    { jsonApiRegister, registerData, jsonApiSerializer },
+    type,
+    jsonApiData) => {
     const typeErrors = validateParameters(
       {
         config, jsonApiSerializer, type, jsonApiData,
@@ -190,6 +194,12 @@ const deserializeJsonApiAsync = R.curry(
     if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
     if (!Result.hasInstance(jsonApiData)) {
       return handleDeserializeJsonApiAsync(jsonApiSerializer, type, jsonApiData);
+    }
+    if (isFunction(jsonApiRegister)) {
+      const jsonApiRegistering = jsonApiRegister(jsonApiSerializer, registerData);
+      if (!isJsonApiRegisteringSuccessful(jsonApiRegistering)) {
+        return jsonApiRegistering;
+      }
     }
     return jsonApiData.chain(
       async (data) => {
