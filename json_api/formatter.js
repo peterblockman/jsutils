@@ -4,16 +4,19 @@ class self {
 module.exports = self;
 const R = require('ramda');
 const isEmpty = require('lodash/isEmpty');
+const isFunction = require('lodash/isFunction');
 const Result = require('folktale/result');
 const { keepIncludedIfRequest } = require('./included_prop');
 const { validateParameters } = require('../parameter/validate');
 const { getErrorType } = require('./utils');
 const { pipeAwait } = require('../ramda/pipe');
+const {
+  isJsonApiRegisteringSuccessful,
+} = require('./utils');
 /**
  * Serializing data to JSONAPI format
  * @param  {string|string[]} include - the properties that be included in included property
- * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
- * @param  {import('./typedefs').JsonApiSerializer} jsonApiSerializer
+ * @param {import('./typedefs').JsonApiUtils} jsonApiUtils - registerData included
  * @param  {import('./typedefs').Type} options.type  - json-api-serializer's type
  * @param  {any} options.extraData - json-api-serializer' extraData
  * @param  {Object|Object[]} data  - the data to convert
@@ -22,10 +25,14 @@ const { pipeAwait } = require('../ramda/pipe');
 const handleSerializeToJsonApi = R.curry(
   (
     include,
+    jsonApiRegister,
     jsonApiSerializer,
     { type, extraData },
     data,
   ) => {
+    // data is pass to jsonApiRegister because in some specific case
+    // one needs to access to raw data
+    if (isFunction(jsonApiRegister)) jsonApiRegister(data);
     const serializedData = jsonApiSerializer.serialize(type, data, extraData);
     return keepIncludedIfRequest(include, serializedData);
   },
@@ -33,8 +40,7 @@ const handleSerializeToJsonApi = R.curry(
 /**
  * Serializing data to JSONAPI format and wrap it in foltale/result
  * @param  {string|string[]} include - the properties that be included in included property
- * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
- * @param  {import('./typedefs').JsonApiSerializer} jsonApiSerializer
+ * @param {import('./typedefs').JsonApiUtils} jsonApiUtils - registerData excluded
  * @param  {import('./typedefs').Type} options.type
  * @param  {any} options.extraData - json-api-serializer' extraData
  * @param  {Object|Object[]} data  - the data to convert
@@ -44,7 +50,10 @@ const createSerializeToJsonApi = R.curry(
   (
     config,
     include,
-    jsonApiSerializer,
+    {
+      jsonApiRegister,
+      jsonApiSerializer,
+    },
     { type, extraData },
     dataResult,
   ) => dataResult.chain(
@@ -72,6 +81,7 @@ const createSerializeToJsonApi = R.curry(
       return Result.Ok(
         handleSerializeToJsonApi(
           include,
+          jsonApiRegister,
           jsonApiSerializer,
           { type, extraData },
           data,
@@ -105,7 +115,12 @@ const handleDeserializeJsonApi = R.curry(
  * & import('../folktale/typedefs').FolktaleResult } jsonApiDataResult
  */
 const deserializeJsonApi = R.curry(
-  (config, jsonApiSerializer, type, jsonApiData) => {
+  (
+    config,
+    { jsonApiRegister, registerData, jsonApiSerializer },
+    type,
+    jsonApiData,
+  ) => {
     const typeErrors = validateParameters(
       {
         config, jsonApiSerializer, type, jsonApiData,
@@ -114,7 +129,12 @@ const deserializeJsonApi = R.curry(
     );
     const { useGenericError } = config;
     if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
-
+    if (isFunction(jsonApiRegister)) {
+      const jsonApiRegistering = jsonApiRegister(jsonApiSerializer, registerData);
+      if (!isJsonApiRegisteringSuccessful(jsonApiRegistering)) {
+        return jsonApiRegistering;
+      }
+    }
     if (!Result.hasInstance(jsonApiData)) {
       return handleDeserializeJsonApi(jsonApiSerializer, type, jsonApiData);
     }

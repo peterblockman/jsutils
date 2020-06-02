@@ -32,11 +32,14 @@ module.exports = self;
  */
 
 /**
- * @typedef {Object} JsonApiRegister - register jsonapi
+ * @typedef {Function|Null} JsonApiRegister - register jsonapi
+ * if it is a function it has to return JsonApiRegister as defined below
  * const JSONAPISerializer = require('json-api-serializer');
  * const Serializer = new JSONAPISerializer();
  * const JsonApiRegister = Serializer.register
+ * if it is null, registering jsonapi have to be done beforehand
  */
+
 
 /**
  * @typedef {Object} RegisterItem
@@ -47,4 +50,11 @@ module.exports = self;
 
 /**
  * @typedef {RegisterItem[]} RegisterData - the register data
+ */
+
+/**
+ * @typedef {Object} JsonApiUtils - contains JsonApiRegister, JsonApiSerializer and RegisterData
+ * @property {JsonApiRegister} JsonApiUtils.jsonApiRegister
+ * @property {JsonApiSerializer} JsonApiUtils.jsonApiSerializer
+ * @property {RegisterData} JsonApiUtils.registerData
  */

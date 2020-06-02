@@ -36,14 +36,14 @@ describe('modules/json_api/register', () => {
       expect(schemas).toHaveProperty('photo');
     });
     it('Should generate jsonapi register and serialize jsonapi', () => {
-      const Serializer = new JSONAPISerializer();
-      createGerenateJsonApiRegister({ useGenericError: false }, Serializer, registerData);
+      const jsonApiSerializer = new JSONAPISerializer();
+      createGerenateJsonApiRegister({ useGenericError: false }, jsonApiSerializer, registerData);
       const output = createSerializeToJsonApi(
         {
           useGenericError: false,
         },
         [],
-        Serializer,
+        { jsonApiSerializer },
         {
           type,
           extraData: { count: 2 },

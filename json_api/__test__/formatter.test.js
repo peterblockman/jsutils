@@ -1,6 +1,7 @@
 const R = require('ramda');
 const Boom = require('@hapi/boom');
 const Result = require('folktale/result');
+const JSONAPISerializer = require('json-api-serializer');
 const {
   isInsatanceOfFolktaleResultOk,
   isInsatanceOfFolktaleResultError,
@@ -10,24 +11,30 @@ const {
   createSerializeToJsonApi,
 } = require('../formatter');
 const {
-  Serializer,
   rawData,
   expectedDeserializedOutput,
   type,
   objectKeys,
 } = require('./formatter_mocks');
-
+const { registerData } = require('./register_mocks');
+const { gerenateJsonApiRegisterBoomError } = require('../register');
 const { jsonApiMockObject } = require('./include_mocks');
 
 describe('modules/json_api/formatter', () => {
   describe('createSerializeToJsonApi', () => {
+    let jsonApiSerializer;
+    beforeEach(() => {
+      const tempSerializer = new JSONAPISerializer();
+      gerenateJsonApiRegisterBoomError(tempSerializer, registerData);
+      jsonApiSerializer = tempSerializer;
+    });
     it('Shoud serialize to json api and return a Result.Ok when data is an object (useGenericError false)', () => {
       const output = createSerializeToJsonApi(
         {
           useGenericError: false,
         },
         [],
-        Serializer,
+        { jsonApiSerializer },
         {
           type,
           extraData: { count: 2 },
@@ -45,7 +52,7 @@ describe('modules/json_api/formatter', () => {
           useGenericError: false,
         },
         ['people'],
-        Serializer,
+        { jsonApiSerializer },
         {
           type,
           extraData: { count: 2 },
@@ -65,13 +72,48 @@ describe('modules/json_api/formatter', () => {
         expect(item).toHaveProperty('links');
       })(R.flatten(outputData.data));
     });
+    it('Shoud serialize to json api and return a Result.Ok when data is an object (useGenericError false) when pass a jsonApiRegister', () => {
+      const output = createSerializeToJsonApi(
+        {
+          useGenericError: false,
+        },
+        [],
+        {
+          jsonApiSerializer,
+          jsonApiRegister: gerenateJsonApiRegisterBoomError,
+          registerData,
+        },
+        {
+          type,
+          extraData: { count: 2 },
+        },
+        Result.Ok(rawData),
+      );
+      expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
+      expect(R.keys(output.merge())).toMatchObject(objectKeys);
+      expect(output.merge().data).toMatchObject(jsonApiMockObject.data);
+      expect(output.merge().data).not.toHaveProperty('included');
+    });
   });
   describe('deserializeJsonApi', () => {
+    let jsonApiSerializer;
+    beforeEach(() => {
+      jsonApiSerializer = new JSONAPISerializer();
+    });
     it('Should deserialize jsonapi data (useGenericError true)', () => {
       const config = {
         useGenericError: true,
       };
-      const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
+      const output = deserializeJsonApi(
+        config,
+        {
+          jsonApiSerializer,
+          jsonApiRegister: gerenateJsonApiRegisterBoomError,
+          registerData,
+        },
+        type,
+        jsonApiMockObject,
+      );
       expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
       expect(output.merge()).toStrictEqual(expectedDeserializedOutput);
     });
@@ -81,7 +123,16 @@ describe('modules/json_api/formatter', () => {
         useGenericError: true,
       };
       const type = 1;
-      const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
+      const output = deserializeJsonApi(
+        config,
+        {
+          jsonApiSerializer,
+          jsonApiRegister: gerenateJsonApiRegisterBoomError,
+          registerData,
+        },
+        type,
+        jsonApiMockObject,
+      );
       expect(isInsatanceOfFolktaleResultError(output)).toBe(true);
       const error = output.merge();
       expect(error instanceof Error).toBe(true);
@@ -91,7 +142,16 @@ describe('modules/json_api/formatter', () => {
       const config = {
         useGenericError: false,
       };
-      const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
+      const output = deserializeJsonApi(
+        config,
+        {
+          jsonApiSerializer,
+          jsonApiRegister: gerenateJsonApiRegisterBoomError,
+          registerData,
+        },
+        type,
+        jsonApiMockObject,
+      );
       expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
       expect(output.merge()).toStrictEqual(expectedDeserializedOutput);
     });
@@ -100,7 +160,16 @@ describe('modules/json_api/formatter', () => {
         useGenericError: false,
       };
       const type = 1;
-      const output = deserializeJsonApi(config, Serializer, type, jsonApiMockObject);
+      const output = deserializeJsonApi(
+        config,
+        {
+          jsonApiSerializer,
+          jsonApiRegister: gerenateJsonApiRegisterBoomError,
+          registerData,
+        },
+        type,
+        jsonApiMockObject,
+      );
       expect(isInsatanceOfFolktaleResultError(output)).toBe(true);
       const error = output.merge();
       expect(Boom.isBoom(error)).toBe(true);
