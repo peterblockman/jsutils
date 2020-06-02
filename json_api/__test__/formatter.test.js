@@ -73,6 +73,7 @@ describe('modules/json_api/formatter', () => {
       })(R.flatten(outputData.data));
     });
     it('Shoud serialize to json api and return a Result.Ok when data is an object (useGenericError false) when pass a jsonApiRegister', () => {
+      const jsonApiSerializer = new JSONAPISerializer();
       const output = createSerializeToJsonApi(
         {
           useGenericError: false,

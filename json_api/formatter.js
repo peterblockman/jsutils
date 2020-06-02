@@ -25,16 +25,24 @@ const {
 const handleSerializeToJsonApi = R.curry(
   (
     include,
-    jsonApiRegister,
-    jsonApiSerializer,
+    {
+      jsonApiRegister,
+      jsonApiSerializer,
+      registerData,
+    },
     { type, extraData },
     data,
   ) => {
     // data is pass to jsonApiRegister because in some specific case
     // one needs to access to raw data
-    if (isFunction(jsonApiRegister)) jsonApiRegister(data);
+    if (isFunction(jsonApiRegister)) {
+      const jsonApiRegistering = jsonApiRegister(jsonApiSerializer, registerData);
+      if (!isJsonApiRegisteringSuccessful(jsonApiRegistering)) {
+        return jsonApiRegistering;
+      }
+    }
     const serializedData = jsonApiSerializer.serialize(type, data, extraData);
-    return keepIncludedIfRequest(include, serializedData);
+    return Result.Ok(keepIncludedIfRequest(include, serializedData));
   },
 );
 /**
@@ -53,6 +61,7 @@ const createSerializeToJsonApi = R.curry(
     {
       jsonApiRegister,
       jsonApiSerializer,
+      registerData,
     },
     { type, extraData },
     dataResult,
@@ -78,14 +87,15 @@ const createSerializeToJsonApi = R.curry(
           'type property not found in {type, extraData}',
         ));
       }
-      return Result.Ok(
-        handleSerializeToJsonApi(
-          include,
+      return handleSerializeToJsonApi(
+        include,
+        {
           jsonApiRegister,
           jsonApiSerializer,
-          { type, extraData },
-          data,
-        ),
+          registerData,
+        },
+        { type, extraData },
+        data,
       );
     },
   ),
