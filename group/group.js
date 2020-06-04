@@ -5,6 +5,7 @@ const uniqBy = require('lodash/fp/uniqBy');
 const isEmpty = require('lodash/isEmpty');
 const isArray = require('lodash/fp/isArray');
 const isPlainObject = require('lodash/isPlainObject');
+const groupBy = require('lodash/groupBy');
 const { trace } = require('../ramda/trace');
 /**
  * Uniq group item by uniqKey if uniqKey not provided
@@ -151,8 +152,6 @@ const combineCommonAndGroupedItem = R.curry(
       R.filter((x) => x[key] === item[key]),
       R.reduce((acc, x) => ({ ...acc, ...x }), {}), // merge all item into 1 object
       R.pick(groupNames),
-      // trace('xxx'),
-      // R.map(uniqBy(R.prop))
       R.merge(item),
     )(groupedData);
     return R.append(groupPropsData, acc);
@@ -314,6 +313,16 @@ const createReplaceNilPropGroup = R.curry(
 );
 
 const replaceNilPropGroupWithNone = createReplaceNilPropGroup('none');
+/**
+ * simple grouping an Array based on a groupByKey
+ * the different with groupObjectsProps is that it group the array
+ * and return the grouped array without a property keys
+ * @param  {string} groupByKey - the key to group
+ * @return {Array}
+ */
+const groupDataBy = R.curry(
+  (groupByKey, data) => Object.values(groupBy(data, groupByKey)),
+);
 
 module.exports = {
   groupObjectPropsByStructure,
@@ -321,4 +330,5 @@ module.exports = {
   groupObjectsProps,
   groupObjectsPropsAndHeadIfSingle,
   replaceNilPropGroupWithNone,
+  groupDataBy,
 };

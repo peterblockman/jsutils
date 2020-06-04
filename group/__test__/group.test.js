@@ -6,6 +6,7 @@ const {
   groupObjectsProps,
   groupObjectsPropsAndHeadIfSingle,
   replaceNilPropGroupWithNone,
+  groupDataBy,
 } = require('../group');
 const {
   object,
@@ -70,5 +71,52 @@ describe('modules/utils/group', () => {
       expect(output[0].barGroup.barId).toBe(1);
       expect(output[0].barFooGroup.id).toBe('none');
     });
-  }); // end describe groupObjectsPropsAndHeadIfSingle
+  }); // end describe replaceNilPropGroupWithNone
+
+  describe('groupDataBy', () => {
+    it('Should replace the id of a group with "none" if the is null and undefined', () => {
+      const expectedOutput = [
+        [
+          {
+            userId: 1,
+            name: 'hey',
+            distributorId: 1,
+            fruit: 'apple',
+            car: 'toyoto',
+            carId: 1,
+          },
+          {
+            userId: 1,
+            name: 'hey',
+            distributorId: 2,
+            fruit: 'orange',
+            car: 'nissun',
+            carId: 2,
+          },
+        ],
+        [
+          {
+            userId: 2,
+            distributorId: 1,
+            fruit: 'banana',
+            car: 'kame',
+            carId: 3,
+          },
+          {
+            userId: 2,
+            distributorId: 3,
+            fruit: 'pineapple',
+            car: 'oudi',
+            carId: 4,
+          },
+        ],
+      ];
+      const output = groupDataBy(
+        'userId',
+        objects,
+      );
+      expect(output.length).toBe(2);
+      expect(output).toStrictEqual(expectedOutput);
+    });
+  }); // end describe replaceNilPropGroupWithNone
 });
