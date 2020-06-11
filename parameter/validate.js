@@ -34,5 +34,8 @@ const validateParameters = R.curry((args, types) => {
     R.join(', '),
   )(argsArray);
 });
+const validateParametersThrow = validate;
+
 self.validateParameter = validateParameter;
 self.validateParameters = validateParameters;
+self.validateParametersThrow = validateParametersThrow;
