@@ -62,9 +62,12 @@ const handleAxiosRequest = R.curry(
  */
 const createAxiosRequest = R.curry(
   async (method, url, config) => {
-    if (!Result.hasInstance(config)) return handleAxiosRequest(method, url, config);
+    const urlToUse = !Result.hasInstance(config)
+      ? url
+      : url.merge();
+    if (!Result.hasInstance(config)) return handleAxiosRequest(method, urlToUse, config);
     return config.chain(
-      async (configData) => handleAxiosRequest(method, url, configData),
+      async (configData) => handleAxiosRequest(method, urlToUse, configData),
     );
   },
 );
