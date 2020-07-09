@@ -62,7 +62,7 @@ const handleAxiosRequest = R.curry(
  */
 const createAxiosRequest = R.curry(
   async (method, url, config) => {
-    const urlToUse = !Result.hasInstance(config)
+    const urlToUse = !Result.hasInstance(url)
       ? url
       : url.merge();
     if (!Result.hasInstance(config)) return handleAxiosRequest(method, urlToUse, config);
