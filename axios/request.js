@@ -16,16 +16,83 @@ const extractAxiosData = (axiosResResult) => axiosResResult.chain(
 const extractDataFromServerData = (axiosData) => axiosData;
 const encodeURIComponentJSON = (jsonData) => encodeURIComponent(JSON.stringify(jsonData));
 
-const doesConfigContainData = R.curry(
+const doesConfigContainDataProp = R.curry(
   (config) => R.pipe(
-    R.prop('data'),
+    R.prop('requestData'),
     R.equals(true),
   )(config),
 );
 
 const shouldAddDataToConfig = R.curry(
-  (config) => !isEmpty(config) && !doesConfigContainData(config),
+  (config) => !isEmpty(config) && !doesConfigContainDataProp(config),
 );
+
+/**
+ * Add data property to request config if appropiate
+ * @param {Object|null} requestData - data to send in request body
+ * @return {Object}  updated request config
+ */
+const addDataToConfig = R.curry((requestData) => {
+  if (shouldAddDataToConfig(requestData)) {
+    return {
+      data: requestData,
+    };
+  }
+  return {};
+});
+
+/**
+ * Set value for withCredentials prop
+ * @param  {boolean} withCredentials - value of withCredentials prop
+ * @param  {Object}  axiosRequestConfig - current axios request config
+ * @return {Object} updated axios request config with withCredentaisl property value set
+ */
+export const setWithCredentialsProp = R.curry((withCredentials, axiosRequestConfig) => (
+  R.mergeLeft(
+    { withCredentials },
+    axiosRequestConfig,
+  )
+));
+
+/**
+ * Add auth token to request if the server route is secured route
+ * @param {boolean}  isRouteSecure - indicates the server route is secured or not
+ * @param {string}   authToken - auth token for authrization
+ * @param {Object}   config - current request config
+ * @return {Object} updated request config
+ */
+export const addAuthorizationToConfig = R.curry(
+  (isRouteSecure, authToken, axiosRequestConfig) => {
+    if (isRouteSecure) {
+      return R.mergeLeft(axiosRequestConfig, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+    }
+    return axiosRequestConfig;
+  },
+);
+
+/**
+ * Prepare the config for axios request
+ * @param  {string} url - route url
+ * @param  {Object} config - data to prepare axios request config
+ * @return {Object} axios request config
+ */
+const configureAxiosRequest = R.curry((config) => {
+  const {
+    requestData,
+    authToken,
+    isRouteSecure,
+    withCredentials,
+  } = config;
+  return R.pipe(
+    addDataToConfig,
+    addAuthorizationToConfig(isRouteSecure, authToken),
+    setWithCredentialsProp(withCredentials),
+  )(requestData);
+});
 
 /**
  * Handle axios request
@@ -40,16 +107,19 @@ const shouldAddDataToConfig = R.curry(
 const handleAxiosRequest = R.curry(
   async (method, url, config) => {
     try {
-      const configToUse = shouldAddDataToConfig(config)
-        ? { data: config }
-        : config;
-      const res = await axios(R.merge({ method, url }, configToUse));
+      const axiosRequestConfig = configureAxiosRequest(config);
+      trace(`Axios Request Config for URL ${url}`, axiosRequestConfig);
+      const res = await axios(R.mergeLeft(
+        { method, url },
+        axiosRequestConfig,
+      ));
       return Result.Ok(res);
     } catch (error) {
       return Result.Error(error);
     }
   },
 );
+
 /**
  * create axios request
  * @param  {string} method <get, post, put, patch,..> - all axios's method
@@ -62,21 +132,18 @@ const handleAxiosRequest = R.curry(
  */
 const createAxiosRequest = R.curry(
   async (method, url, config) => {
-    const urlToUse = !Result.hasInstance(url)
-      ? url
-      : url.merge();
-    if (!Result.hasInstance(config)) return handleAxiosRequest(method, urlToUse, config);
+    if (!Result.hasInstance(config)) return handleAxiosRequest(method, url, config);
     return config.chain(
-      async (configData) => handleAxiosRequest(method, urlToUse, configData),
+      async (configData) => handleAxiosRequest(method, url, configData),
     );
   },
 );
 // because many get request only need url, so we flip it
-const axiosGet = R.curry(
-  async (url) => pipeAwait(
-    R.flip(createAxiosRequest('get'))({}),
+export const axiosGet = R.curry(
+  async (url, config) => pipeAwait(
+    createAxiosRequest('get', url),
     extractAxiosData,
-  )(url),
+  )(config),
 );
 const axiosPost = R.curry(
   async (url, config) => pipeAwait(
