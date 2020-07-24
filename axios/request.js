@@ -1,14 +1,9 @@
-class self {
-
-}
-module.exports = self;
 const axios = require('axios');
 const R = require('ramda');
 const isEmpty = require('lodash/isEmpty');
 const Result = require('folktale/result');
 const { pipeAwait } = require('../ramda/pipe');
 const { trace } = require('../ramda/trace');
-
 
 const extractAxiosData = (axiosResResult) => axiosResResult.chain(
   (axiosRes) => Result.Ok(axiosRes.data),
@@ -47,7 +42,7 @@ const addDataToConfig = R.curry((requestData) => {
  * @param  {Object}  axiosRequestConfig - current axios request config
  * @return {Object} updated axios request config with withCredentaisl property value set
  */
-export const setWithCredentialsProp = R.curry((withCredentials, axiosRequestConfig) => (
+const setWithCredentialsProp = R.curry((withCredentials, axiosRequestConfig) => (
   R.mergeLeft(
     { withCredentials },
     axiosRequestConfig,
@@ -61,7 +56,7 @@ export const setWithCredentialsProp = R.curry((withCredentials, axiosRequestConf
  * @param {Object}   config - current request config
  * @return {Object} updated request config
  */
-export const addAuthorizationToConfig = R.curry(
+const addAuthorizationToConfig = R.curry(
   (isRouteSecure, authToken, axiosRequestConfig) => {
     if (isRouteSecure) {
       return R.mergeLeft(axiosRequestConfig, {
@@ -139,7 +134,7 @@ const createAxiosRequest = R.curry(
   },
 );
 // because many get request only need url, so we flip it
-export const axiosGet = R.curry(
+const axiosGet = R.curry(
   async (url, config) => pipeAwait(
     createAxiosRequest('get', url),
     extractAxiosData,
@@ -164,9 +159,14 @@ const axiosPatch = R.curry(
   )(config),
 );
 
-self.extractDataFromServerData = extractDataFromServerData;
-self.encodeURIComponentJSON = encodeURIComponentJSON;
-self.axiosGet = axiosGet;
-self.axiosPost = axiosPost;
-self.axiosPut = axiosPut;
-self.axiosPatch = axiosPatch;
+module.exports = {
+  extractDataFromServerData,
+  encodeURIComponentJSON,
+  axiosGet,
+  axiosPost,
+  axiosPut,
+  axiosPatch,
+  addAuthorizationToConfig,
+  addAuthorizationToConfig,
+  setWithCredentialsProp,
+}
