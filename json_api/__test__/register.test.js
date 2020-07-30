@@ -55,26 +55,26 @@ describe('modules/json_api/register', () => {
       expect(output.merge().data).toMatchObject(jsonApiMockObject.data);
     });
   });
-  describe('register/fetchAndRegisterJsonApiGenericError', () => {
-    const jsonApiResgisterRes = {
-      data: [
-        {
-          type: 'secretPhraseValidation',
-          id: 'userId',
-          topLevelLinks: {
-            self: 'localhost:5001/address_party/validate-secret-phrase',
-          },
-        },
-      ],
-    };
-    it('Should fetch and generate json api register', async (done) => {
-      const url = 'foo.com';
-      const Serializer = new JSONAPISerializer();
-      axiosMock.onGet(url).reply(200, jsonApiResgisterRes);
-      const output = await fetchAndRegisterJsonApiGenericError(url, Serializer, registerData);
-      const { schemas } = output.merge();
-      expect(schemas).toHaveProperty('secretPhraseValidation');
-      done();
-    });
-  });
+  // describe('register/fetchAndRegisterJsonApiGenericError', () => {
+  //   const jsonApiResgisterRes = {
+  //     data: [
+  //       {
+  //         type: 'secretPhraseValidation',
+  //         id: 'userId',
+  //         topLevelLinks: {
+  //           self: 'localhost:5001/address_party/validate-secret-phrase',
+  //         },
+  //       },
+  //     ],
+  //   };
+  //   it('Should fetch and generate json api register', async (done) => {
+  //     const url = 'foo.com';
+  //     const Serializer = new JSONAPISerializer();
+  //     axiosMock.onGet(url).reply(200, jsonApiResgisterRes);
+  //     const output = await fetchAndRegisterJsonApiGenericError(url, Serializer, registerData);
+  //     const { schemas } = output.merge();
+  //     expect(schemas).toHaveProperty('secretPhraseValidation');
+  //     done();
+  //   });
+  // });
 });

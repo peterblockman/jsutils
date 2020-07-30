@@ -49,8 +49,12 @@ const createValidateParametersThrow = R.curry((config, args, types) => {
   if (!isEmpty(typeErrors)) throw getErrorType({ useGenericError, boomErrorType: 'badData' }, typeErrors);
   return args;
 });
-const validateParametersThrowGenericError = createValidateParametersThrow({ useGenericError: true });
-const validateParametersThrowBoomError = createValidateParametersThrow({ useGenericError: false });
+const validateParametersThrowGenericError = createValidateParametersThrow(
+  { useGenericError: true },
+);
+const validateParametersThrowBoomError = createValidateParametersThrow(
+  { useGenericError: false },
+);
 
 self.validateParameter = validateParameter;
 self.validateParameters = validateParameters;
