@@ -74,16 +74,20 @@ const createSerializeToJsonApi = R.curry(
         ['object', 'object', 'string', '*', 'object|array'],
       );
       const { useGenericError } = config;
-      if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
+      if (!isEmpty(typeErrors)) {
+        return Result.Error(getErrorType(
+          { useGenericError, boomErrorType: 'badData' },
+          typeErrors,
+        ));
+      }
       if (isEmpty(data)) {
         return Result.Error(
-          getErrorType(useGenericError, 'notFound', 'JSONAPI: No data provided'),
+          getErrorType({ useGenericError, boomErrorType: 'notFound' }, 'JSONAPI: No data provided'),
         );
       }
       if (isEmpty(type)) {
         return Result.Error(getErrorType(
-          useGenericError,
-          'badData',
+          { useGenericError, boomErrorType: 'badData' },
           'type property not found in {type, extraData}',
         ));
       }
@@ -138,7 +142,12 @@ const deserializeJsonApi = R.curry(
       ['object', 'object', 'string', 'object|array'],
     );
     const { useGenericError } = config;
-    if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
+    if (!isEmpty(typeErrors)) {
+      return Result.Error(getErrorType(
+        { useGenericError, boomErrorType: 'badData' },
+        typeErrors,
+      ));
+    }
     if (isFunction(jsonApiRegister)) {
       const jsonApiRegistering = jsonApiRegister(jsonApiSerializer, registerData);
       if (!isJsonApiRegisteringSuccessful(jsonApiRegistering)) {
@@ -191,7 +200,14 @@ const deserializeJsonApiAsync = R.curry(
       ['object', 'object', 'string', 'object|array'],
     );
     const { useGenericError } = config;
-    if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
+    if (!isEmpty(typeErrors)) {
+      return Result.Error(
+        getErrorType(
+          { useGenericError, boomErrorType: 'badData' },
+          typeErrors,
+        ),
+      );
+    }
     if (!Result.hasInstance(jsonApiData)) {
       return handleDeserializeJsonApiAsync(jsonApiSerializer, type, jsonApiData);
     }
@@ -209,7 +225,12 @@ const deserializeJsonApiAsync = R.curry(
           },
           ['object|array'],
         );
-        if (!isEmpty(typeErrors)) return Result.Error(getErrorType(useGenericError, 'badData', typeErrors));
+        if (!isEmpty(typeErrors)) {
+          return Result.Error(getErrorType(
+            { useGenericError, boomErrorType: 'badData' },
+            typeErrors,
+          ));
+        }
         return handleDeserializeJsonApiAsync(jsonApiSerializer, type, data);
       },
     );

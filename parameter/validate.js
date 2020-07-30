@@ -4,7 +4,8 @@ class self {
 module.exports = self;
 const R = require('ramda');
 const { validate } = require('bycontract');
-
+const isEmpty = require('lodash/isEmpty');
+const { getErrorType } = require('../json_api/utils');
 /**
  * Validate parameter of a function
  * @param  {import('./typedefs').ParameterToValidate} arg
@@ -34,8 +35,25 @@ const validateParameters = R.curry((args, types) => {
     R.join(', '),
   )(argsArray);
 });
-const validateParametersThrow = validate;
+
+
+const createValidateParametersThrow = R.curry((config, args, types) => {
+  const { useGenericError } = config;
+  const mapIndexed = R.addIndex(R.map);
+  const argsArray = R.toPairs(args);
+  const typeErrors = R.pipe(
+    mapIndexed((arg, index) => validateParameter(arg, types[index])),
+    R.filter((value) => value != null),
+    R.join(', '),
+  )(argsArray);
+  if (!isEmpty(typeErrors)) throw getErrorType({ useGenericError, boomErrorType: 'badData' }, typeErrors);
+  return args;
+});
+const validateParametersThrowGenericError = createValidateParametersThrow({ useGenericError: true });
+const validateParametersThrowBoomError = createValidateParametersThrow({ useGenericError: false });
 
 self.validateParameter = validateParameter;
 self.validateParameters = validateParameters;
-self.validateParametersThrow = validateParametersThrow;
+self.createValidateParametersThrow = createValidateParametersThrow;
+self.validateParametersThrowGenericError = validateParametersThrowGenericError;
+self.validateParametersThrowBoomError = validateParametersThrowBoomError;

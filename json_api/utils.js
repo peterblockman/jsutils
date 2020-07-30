@@ -21,10 +21,10 @@ const { trace } = require('../ramda/trace');
  * @return {Error|Boom}
  */
 const getErrorType = R.curry(
-  (useGenericError, BoomErrorType, errorMessage) => (
+  ({ useGenericError, boomErrorType }, errorMessage) => (
     useGenericError
       ? new Error(errorMessage)
-      : Boom[BoomErrorType](errorMessage)
+      : Boom[boomErrorType](errorMessage)
   ),
 );
 /**
