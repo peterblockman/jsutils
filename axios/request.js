@@ -13,7 +13,7 @@ const encodeURIComponentJSON = (jsonData) => encodeURIComponent(JSON.stringify(j
 
 const doesConfigContainDataProp = R.curry(
   (config) => R.pipe(
-    R.prop('requestData'),
+    R.prop('data'),
     R.equals(true),
   )(config),
 );
@@ -24,13 +24,13 @@ const shouldAddDataToConfig = R.curry(
 
 /**
  * Add data property to request config if appropiate
- * @param {Object|null} requestData - data to send in request body
+ * @param {Object|null} data - data to send in request body
  * @return {Object}  updated request config
  */
-const addDataToConfig = R.curry((requestData) => {
-  if (shouldAddDataToConfig(requestData)) {
+const addDataToConfig = R.curry((data) => {
+  if (shouldAddDataToConfig(data)) {
     return {
-      data: requestData,
+      data,
     };
   }
   return {};
@@ -77,7 +77,7 @@ const addAuthorizationToConfig = R.curry(
  */
 const configureAxiosRequest = R.curry((config) => {
   const {
-    requestData,
+    data,
     authToken,
     isRouteSecure,
     withCredentials,
@@ -86,7 +86,7 @@ const configureAxiosRequest = R.curry((config) => {
     addDataToConfig,
     addAuthorizationToConfig(isRouteSecure, authToken),
     setWithCredentialsProp(withCredentials),
-  )(requestData);
+  )(data);
 });
 
 /**
@@ -169,4 +169,4 @@ module.exports = {
   addAuthorizationToConfig,
   addAuthorizationToConfig,
   setWithCredentialsProp,
-}
+};
