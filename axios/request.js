@@ -1,9 +1,17 @@
+const self = class {
+
+};
+module.exports = self;
+
 const axios = require('axios');
 const R = require('ramda');
 const isEmpty = require('lodash/isEmpty');
 const Result = require('folktale/result');
 const { pipeAwait } = require('../ramda/pipe');
 const { trace } = require('../ramda/trace');
+const {
+  isJsonApi,
+} = require('../json_api/utils');
 
 const extractAxiosData = (axiosResResult) => axiosResResult.chain(
   (axiosRes) => Result.Ok(axiosRes.data),
@@ -12,30 +20,32 @@ const extractDataFromServerData = (axiosData) => axiosData;
 const encodeURIComponentJSON = (jsonData) => encodeURIComponent(JSON.stringify(jsonData));
 
 const doesConfigContainDataProp = R.curry(
-  (config) => R.pipe(
-    R.prop('data'),
-    R.equals(true),
-  )(config),
+  (config) => R.has('data', config),
 );
 
-const shouldAddDataToConfig = R.curry(
-  (config) => !isEmpty(config) && !doesConfigContainDataProp(config),
-);
 
 /**
  * Add data property to request config if appropiate
  * @param {Object|null} data - data to send in request body
  * @return {Object}  updated request config
  */
-const addDataToConfig = R.curry((data) => {
-  if (shouldAddDataToConfig(data)) {
+const addDataToConfig = R.curry(
+  (config) => {
+    if (doesConfigContainDataProp(config)) {
+      const isConfigJsonApiData = isJsonApi(config);
+      if (isConfigJsonApiData) {
+        return {
+          data: config,
+        };
+      }
+      return config;
+    }
+    // does not contain data, the config is the data
     return {
-      data,
+      data: config,
     };
-  }
-  return {};
-});
-
+  },
+);
 /**
  * Set value for withCredentials prop
  * @param  {boolean} withCredentials - value of withCredentials prop
@@ -65,6 +75,7 @@ const addAuthorizationToConfig = R.curry(
         },
       });
     }
+
     return axiosRequestConfig;
   },
 );
@@ -77,16 +88,19 @@ const addAuthorizationToConfig = R.curry(
  */
 const configureAxiosRequest = R.curry((config) => {
   const {
-    data,
     authToken,
     isRouteSecure,
     withCredentials,
   } = config;
   return R.pipe(
+    // omit them because they don't belong to axios config
+    R.omit(
+      ['isRouteSecure', 'authToken'],
+    ),
     addDataToConfig,
     addAuthorizationToConfig(isRouteSecure, authToken),
     setWithCredentialsProp(withCredentials),
-  )(data);
+  )(config);
 });
 
 /**
@@ -103,7 +117,6 @@ const handleAxiosRequest = R.curry(
   async (method, url, config) => {
     try {
       const axiosRequestConfig = configureAxiosRequest(config);
-      trace(`Axios Request Config for URL ${url}`, axiosRequestConfig);
       const res = await axios(R.mergeLeft(
         { method, url },
         axiosRequestConfig,
@@ -122,7 +135,8 @@ const handleAxiosRequest = R.curry(
  * @param  {Object|FolktaleResult} config contains data and other axios configs - similar
  * to axios object but doesnot contain url property
  * @return {Object} axios's response object
- * Note that in many cases we only need to pass data,
+ * Note one can pass an object without any other configurations rather than the data
+ * in this case, the object is the data
  * that is why we check doesConfigContainData
  */
 const createAxiosRequest = R.curry(
@@ -159,14 +173,11 @@ const axiosPatch = R.curry(
   )(config),
 );
 
-module.exports = {
-  extractDataFromServerData,
-  encodeURIComponentJSON,
-  axiosGet,
-  axiosPost,
-  axiosPut,
-  axiosPatch,
-  addAuthorizationToConfig,
-  addAuthorizationToConfig,
-  setWithCredentialsProp,
-};
+self.extractDataFromServerData = extractDataFromServerData;
+self.encodeURIComponentJSON = encodeURIComponentJSON;
+self.axiosGet = axiosGet;
+self.axiosPost = axiosPost;
+self.axiosPut = axiosPut;
+self.axiosPatch = axiosPatch;
+self.addAuthorizationToConfig = addAuthorizationToConfig;
+self.setWithCredentialsProp = setWithCredentialsProp;
