@@ -172,6 +172,12 @@ const axiosPatch = R.curry(
     extractAxiosData,
   )(config),
 );
+const axiosDelete = R.curry(
+  async (url, config) => pipeAwait(
+    createAxiosRequest('delete', url),
+    extractAxiosData,
+  )(config),
+);
 
 self.extractDataFromServerData = extractDataFromServerData;
 self.encodeURIComponentJSON = encodeURIComponentJSON;
@@ -179,5 +185,6 @@ self.axiosGet = axiosGet;
 self.axiosPost = axiosPost;
 self.axiosPut = axiosPut;
 self.axiosPatch = axiosPatch;
+self.axiosDelete = axiosDelete;
 self.addAuthorizationToConfig = addAuthorizationToConfig;
 self.setWithCredentialsProp = setWithCredentialsProp;
