@@ -50,7 +50,7 @@ Set heroku-prebuild
 ## Public Github repository
 ### Local
 ```
-npm install vietvu-nguyen/javascript_utils --save
+npm install peterblockman/javascript_utils.git --save
 ```
 ## Heroku
 It will be automatically installed while deploying to Heroku
