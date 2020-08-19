@@ -315,8 +315,8 @@ const createReplaceNilPropGroup = R.curry(
 const replaceNilPropGroupWithNone = createReplaceNilPropGroup('none');
 /**
  * simple grouping an Array based on a groupByKey
- * the different with groupObjectsProps is that it group the array
- * and return the grouped array without a property keys
+ * the different with groupObjectsProps is that it groups the array
+ * and returns the grouped array without a property keys
  * @param  {string} groupByKey - the key to group
  * @return {Array}
  */

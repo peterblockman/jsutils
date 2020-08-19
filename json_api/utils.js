@@ -6,14 +6,16 @@ const R = require('ramda');
 const Boom = require('@hapi/boom');
 const Result = require('folktale/result');
 const isEmpty = require('lodash/isEmpty');
-const isPlainObject = require('lodash/isPlainObject');
 const isArray = require('lodash/isArray');
+const isPlainObject = require('lodash/isPlainObject');
 const { isInsatanceOfFolktaleResultOk } = require('../folktale/instances');
 const {
   jsonApiKeys, jsonApiEssentialkeys, jsonApiDataEssentialKeys, jsonApiDataKeys,
 } = require('./constants');
 const { trace } = require('../ramda/trace');
-
+const {
+  validateParameters,
+} = require('../parameter/validate');
 /**
  * Get error type: generic Js Error or Boom error object
  * @param  {import('./typedefs').UseGenericError} useGenericError
@@ -94,6 +96,42 @@ const isJsonApi = createIsJsonApi(
   jsonApiDataKeys,
   jsonApiDataEssentialKeys,
 );
+  /**
+   * Hanlde function for getTypeAndAttrubutes
+   * @param  {Object} jsonapiObject
+   * @return {Object}
+   */
+const handleGetTypeAndAttrubutes = R.curry(
+  (jsonapiObject) => {
+    const typeErrors = validateParameters({ jsonapiObject }, ['object']);
+    if (!isEmpty(typeErrors)) return Result.Error(new Error(typeErrors));
+    const pickTypeAttributes = R.pick(['type', 'attributes']);
+    return R.pipe(
+      R.omit(['jsonapi', 'meta', 'links', 'included']),
+      R.over(
+        R.lensProp('data'),
+        (lenedData) => (isArray(lenedData)
+          ? R.map(pickTypeAttributes, lenedData)
+          : pickTypeAttributes(lenedData)),
+      ),
+      Result.Ok,
+    )(jsonapiObject);
+  },
+);
+/**
+ * Get type and attributes only from an jsonapi object
+ * @param  {FolktaleResult|Object} result
+ * @return {Object}
+ */
+const getTypeAndAttrubutes = R.curry(
+  (result) => {
+    if (!Result.hasInstance(result)) {
+      return handleGetTypeAndAttrubutes(result);
+    }
+    return result.chain((data) => handleGetTypeAndAttrubutes(data));
+  },
+);
 self.getErrorType = getErrorType;
 self.isJsonApiRegisteringSuccessful = isJsonApiRegisteringSuccessful;
 self.isJsonApi = isJsonApi;
+self.getTypeAndAttrubutes = getTypeAndAttrubutes;

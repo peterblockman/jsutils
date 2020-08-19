@@ -1,3 +1,4 @@
+const R = require('ramda');
 const JSONAPISerializer = require('json-api-serializer');
 const Result = require('folktale/result');
 const {
@@ -7,6 +8,7 @@ const {
 const {
   isJsonApiRegisteringSuccessful,
   isJsonApi,
+  getTypeAndAttrubutes,
 } = require('../utils');
 const { jsonApiMockObject } = require('./include_mocks');
 
@@ -39,6 +41,21 @@ describe('modules/json_api/utils', () => {
     it('Should return false when pass a empty object', () => {
       const output = isJsonApi({});
       expect(output).toBe(false);
+    });
+  });
+  describe('utils/getTypeAndAttrubutes', () => {
+    it('Should return jsonapi object with data that have type and attributes only', () => {
+      const output = R.pipe(
+        getTypeAndAttrubutes,
+        (result) => result.merge(),
+      )(jsonApiMockObject);
+      expect(output).toHaveProperty('data');
+      const data = R.pipe(
+        R.prop('data'),
+        R.head,
+      )(output);
+      expect(data).toHaveProperty('type');
+      expect(data).toHaveProperty('attributes');
     });
   });
 });
