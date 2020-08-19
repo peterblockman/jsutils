@@ -24,6 +24,7 @@ const {
  */
 const handleSerializeToJsonApi = R.curry(
   (
+    config,
     include,
     {
       jsonApiRegister,
@@ -33,6 +34,30 @@ const handleSerializeToJsonApi = R.curry(
     { type, extraData },
     data,
   ) => {
+    const typeErrors = validateParameters(
+      {
+        include, jsonApiSerializer, type, extraData, data,
+      },
+      ['array', 'object', 'string', '*', 'object|array'],
+    );
+    const { useGenericError } = config;
+    if (!isEmpty(typeErrors)) {
+      return Result.Error(getErrorType(
+        { useGenericError, boomErrorType: 'badData' },
+        typeErrors,
+      ));
+    }
+    if (isEmpty(data)) {
+      return Result.Error(
+        getErrorType({ useGenericError, boomErrorType: 'notFound' }, 'JSONAPI: No data provided'),
+      );
+    }
+    if (isEmpty(type)) {
+      return Result.Error(getErrorType(
+        { useGenericError, boomErrorType: 'badData' },
+        'type property not found in {type, extraData}',
+      ));
+    }
     // data is pass to jsonApiRegister because in some specific case
     // one needs to access to raw data
     if (isFunction(jsonApiRegister)) {
@@ -65,33 +90,38 @@ const createSerializeToJsonApi = R.curry(
     },
     { type, extraData },
     dataResult,
-  ) => dataResult.chain(
-    (data) => {
-      const typeErrors = validateParameters(
-        {
-          config, jsonApiSerializer, type, extraData, data,
-        },
-        ['object', 'object', 'string', '*', 'object|array'],
-      );
-      const { useGenericError } = config;
-      if (!isEmpty(typeErrors)) {
-        return Result.Error(getErrorType(
+  ) => {
+    const typeErrors = validateParameters(
+      {
+        config,
+      },
+      ['object'],
+    );
+    const { useGenericError } = config;
+    if (!isEmpty(typeErrors)) {
+      return Result.Error(
+        getErrorType(
           { useGenericError, boomErrorType: 'badData' },
           typeErrors,
-        ));
-      }
-      if (isEmpty(data)) {
-        return Result.Error(
-          getErrorType({ useGenericError, boomErrorType: 'notFound' }, 'JSONAPI: No data provided'),
-        );
-      }
-      if (isEmpty(type)) {
-        return Result.Error(getErrorType(
-          { useGenericError, boomErrorType: 'badData' },
-          'type property not found in {type, extraData}',
-        ));
-      }
+        ),
+      );
+    }
+    if (!Result.hasInstance(dataResult)) {
       return handleSerializeToJsonApi(
+        config,
+        include,
+        {
+          jsonApiRegister,
+          jsonApiSerializer,
+          registerData,
+        },
+        { type, extraData },
+        dataResult,
+      );
+    }
+    return dataResult.chain(
+      (data) => handleSerializeToJsonApi(
+        config,
         include,
         {
           jsonApiRegister,
@@ -100,9 +130,9 @@ const createSerializeToJsonApi = R.curry(
         },
         { type, extraData },
         data,
-      );
-    },
-  ),
+      ),
+    );
+  },
 );
 const serializeToJsonApiGenericError = createSerializeToJsonApi({ useGenericError: true });
 const serializeToJsonApiBoomError = createSerializeToJsonApi({ useGenericError: false });
