@@ -14,6 +14,56 @@ const {
   isJsonApiRegisteringSuccessful,
 } = require('./utils');
 const { isReduxAction, isRejectAction } = require('../redux/utils');
+
+const createFormatData = (
+  formatFn,
+  jsonApiSerializer,
+  type,
+  jsonApiData,
+  ...args
+) => {
+  if (isReduxAction(jsonApiData)) {
+    const { type: actionType, payload } = jsonApiData;
+    if (isRejectAction(actionType)) {
+      return jsonApiData;
+    }
+    const deserializedData = jsonApiSerializer[formatFn](type, payload, ...args);
+    return { type: actionType, payload: deserializedData };
+  }
+  const formatedData = jsonApiSerializer[formatFn](type, jsonApiData, ...args);
+  return Result.Ok(formatedData);
+};
+
+const serialize = R.curryN(
+  5,
+  createFormatData,
+)('serialize');
+const deserialize = R.curryN(
+  4,
+  createFormatData,
+)('deserialize');
+const createFormatDataAsync = async (
+  formatFn,
+  jsonApiSerializer,
+  type,
+  jsonApiData,
+  ...args
+) => {
+  if (isReduxAction(jsonApiData)) {
+    const { type: actionType, payload } = jsonApiData;
+    if (isRejectAction(actionType)) {
+      return jsonApiData;
+    }
+    const deserializedData = await jsonApiSerializer[formatFn](type, payload, ...args);
+    return { type: actionType, payload: deserializedData };
+  }
+  const formatedData = await jsonApiSerializer[formatFn](type, jsonApiData, ...args);
+  return Result.Ok(formatedData);
+};
+const deserializeAsync = R.curryN(
+  4,
+  createFormatDataAsync,
+)('deserializeAsync');
 /**
  * Serializing data to JSONAPI format
  * @param  {string|string[]} include - the properties that be included in included property
@@ -67,9 +117,11 @@ const handleSerializeToJsonApi = R.curry(
         return jsonApiRegistering;
       }
     }
-    const serializedData = jsonApiSerializer.serialize(type, data, extraData);
     const includeToUse = include || [];
-    return Result.Ok(keepIncludedIfRequest(includeToUse, serializedData));
+    return R.pipe(
+      serialize(jsonApiSerializer, type, data),
+      keepIncludedIfRequest(includeToUse),
+    )(extraData);
   },
 );
 /**
@@ -139,28 +191,6 @@ const createSerializeToJsonApi = R.curry(
 const serializeToJsonApiGenericError = createSerializeToJsonApi({ useGenericError: true });
 const serializeToJsonApiBoomError = createSerializeToJsonApi({ useGenericError: false });
 /**
- * deserialize data into json api
- * @param  {import('./typedefs').DeserializeConfig} config
- * @param  {import('./typedefs').Type} type
- * @param  {import('./typedefs').JsonApiData} jsonApiData
- * @return {import('./typedefs').JsonApiData} deserialized json api
- */
-
-const handleDeserializeJsonApi = R.curry(
-  (jsonApiSerializer, type, jsonApiData) => {
-    if (isReduxAction(jsonApiData)) {
-      const { type: actionType, payload } = jsonApiData;
-      if (isRejectAction(actionType)) {
-        return jsonApiData;
-      }
-      const deserializedData = jsonApiSerializer.deserialize(type, payload);
-      return { type: actionType, payload: deserializedData };
-    }
-    const deserializedData = jsonApiSerializer.deserialize(type, jsonApiData);
-    return Result.Ok(deserializedData);
-  },
-);
-/**
  * Deserialize jsonapi
  * if one pass on redux action {type, payload}, instead of return Result
  * it will return the action object.
@@ -199,37 +229,16 @@ const deserializeJsonApi = R.curry(
       }
     }
     if (!Result.hasInstance(jsonApiData)) {
-      return handleDeserializeJsonApi(jsonApiSerializer, type, jsonApiData);
+      return deserialize(jsonApiSerializer, type, jsonApiData);
     }
     return jsonApiData.chain(
-      (data) => handleDeserializeJsonApi(jsonApiSerializer, type, data),
+      (data) => deserialize(jsonApiSerializer, type, jsonApiData),
     );
   },
 );
 
 const deserializeJsonApiGenericError = deserializeJsonApi({ useGenericError: true });
 const deserializeJsonApiBoomError = deserializeJsonApi({ useGenericError: false });
-/**
- * deserialize data  async into json api
- * @param  {import('./typedefs').DeserializeConfig} config
- * @param  {import('./typedefs').Type} type
- * @param  {import('./typedefs').JsonApiData} jsonApiData
- * @return {import('./typedefs').JsonApiData} deserialized json api
- */
-const handleDeserializeJsonApiAsync = R.curry(
-  async (jsonApiSerializer, type, jsonApiData) => {
-    if (isReduxAction(jsonApiData)) {
-      const { type: actionType, payload } = jsonApiData;
-      if (isRejectAction(actionType)) {
-        return jsonApiData;
-      }
-      const deserializedData = await jsonApiSerializer.deserializeAsync(type, payload);
-      return { type: actionType, payload: deserializedData };
-    }
-    const deserializedData = await jsonApiSerializer.deserializeAsync(type, jsonApiData);
-    return Result.Ok(deserializedData);
-  },
-);
 
 /**
  * Deserialize jsonapi async
@@ -263,7 +272,7 @@ const deserializeJsonApiAsync = R.curry(
       );
     }
     if (!Result.hasInstance(jsonApiData)) {
-      return handleDeserializeJsonApiAsync(jsonApiSerializer, type, jsonApiData);
+      return deserializeAsync(jsonApiSerializer, type, jsonApiData);
     }
     if (isFunction(jsonApiRegister)) {
       const jsonApiRegistering = jsonApiRegister(jsonApiSerializer, registerData);
@@ -285,7 +294,7 @@ const deserializeJsonApiAsync = R.curry(
             typeErrors,
           ));
         }
-        return handleDeserializeJsonApiAsync(jsonApiSerializer, type, data);
+        return deserializeAsync(jsonApiSerializer, type, data);
       },
     );
   },

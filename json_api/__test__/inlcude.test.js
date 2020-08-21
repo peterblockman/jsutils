@@ -12,39 +12,43 @@ describe('json_api/include', () => {
     it('Should keep included props if include is an Array', () => {
       const include = ['people'];
       const mockObjectOutput = updateIncludedProps(include, jsonApiMockObject);
-      const types = getOutputTypes(mockObjectOutput);
-      expect(mockObjectOutput).toHaveProperty('included');
+      const data = mockObjectOutput.getOrElse(undefined);
+      const types = getOutputTypes(data);
+      expect(data).toHaveProperty('included');
       expect(R.equals(types, include)).toBe(true);
     });
     it('Should keep included props if include is a string', () => {
       const include = 'people';
       const mockObjectOutput = updateIncludedProps(include, jsonApiMockObject);
-      const types = getOutputTypes(mockObjectOutput);
-      expect(mockObjectOutput).toHaveProperty('included');
+      const data = mockObjectOutput.getOrElse(undefined);
+      const types = getOutputTypes(data);
+      expect(data).toHaveProperty('included');
       expect(R.equals(types, [include])).toBe(true);
     });
     it('Should keep included props if include is an object', () => {
       const include = { includeProp: 'people' };
       const mockObjectOutput = updateIncludedProps(include, jsonApiMockObject);
-      const types = getOutputTypes(mockObjectOutput);
-      expect(mockObjectOutput).toHaveProperty('included');
+      const data = mockObjectOutput.getOrElse(undefined);
+      const types = getOutputTypes(data);
+      expect(data).toHaveProperty('included');
       expect(R.equals(types, [include.includeProp])).toBe(true);
     });
     it('Should drop included props if not request', () => {
       const include = undefined;
       const output = updateIncludedProps(include, jsonApiMockObject);
-      expect(output).not.toHaveProperty('included');
+      expect(output.getOrElse(undefined)).not.toHaveProperty('included');
     });
     it('Should drop included props if request with include that have props which doesnot exist in included', () => {
       const include = ['photo'];
       const output = updateIncludedProps(include, jsonApiMockObject);
-      expect(output).not.toHaveProperty('included');
+      expect(output.getOrElse(undefined)).not.toHaveProperty('included');
     });
     it('Should keep only included props that exist', () => {
       const include = ['people', 'photo'];
       const mockObjectOutput = updateIncludedProps(include, jsonApiMockObject);
-      const types = getOutputTypes(mockObjectOutput);
-      expect(mockObjectOutput).toHaveProperty('included');
+      const data = mockObjectOutput.getOrElse(undefined);
+      const types = getOutputTypes(data);
+      expect(data).toHaveProperty('included');
       expect(R.equals(types, ['people'])).toBe(true);
     });
   });
@@ -55,17 +59,19 @@ describe('json_api/include', () => {
         include,
         [jsonApiMockObject, jsonApiMockObject],
       );
+      const data = mockObjectsOutput.getOrElse(undefined);
       R.map((mockObjectOutput) => {
         const types = getOutputTypes(mockObjectOutput);
         expect(mockObjectOutput).toHaveProperty('included');
         expect(R.equals(types, include)).toBe(true);
-      }, mockObjectsOutput);
+      }, data);
     });
     it('Should keep included props if include and jsonApiDatas is an object', () => {
       const include = ['people'];
       const mockObjectOutput = keepIncludedIfRequest(include, jsonApiMockObject);
-      const types = getOutputTypes(mockObjectOutput);
-      expect(mockObjectOutput).toHaveProperty('included');
+      const data = mockObjectOutput.getOrElse(undefined);
+      const types = getOutputTypes(data);
+      expect(data).toHaveProperty('included');
       expect(R.equals(types, include)).toBe(true);
     });
     it('Should drop included props if not request (include is undefined)', () => {
@@ -74,9 +80,12 @@ describe('json_api/include', () => {
         include,
         [jsonApiMockObject, jsonApiMockObject],
       );
+      const data = mockObjectsOutput.getOrElse(undefined);
       R.map((mockObjectOutput) => {
-        expect(mockObjectOutput).not.toHaveProperty('included');
-      }, mockObjectsOutput);
+        expect(
+          mockObjectOutput,
+        ).not.toHaveProperty('included');
+      }, data);
     });
     it('Should drop included props if not request (include is an empty array)', () => {
       const include = [];
@@ -84,9 +93,11 @@ describe('json_api/include', () => {
         include,
         [jsonApiMockObject, jsonApiMockObject],
       );
+      const data = mockObjectsOutput.getOrElse(undefined);
+
       R.map((mockObjectOutput) => {
         expect(mockObjectOutput).not.toHaveProperty('included');
-      }, mockObjectsOutput);
+      }, data);
     });
   });
 });

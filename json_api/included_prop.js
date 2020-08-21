@@ -4,7 +4,8 @@ const isArray = require('lodash/isArray');
 const isString = require('lodash/isString');
 const isPlainObject = require('lodash/isPlainObject');
 const toArray = require('lodash/toArray');
-
+const Result = require('folktale/result');
+const { unwrapResultList } = require('../folktale/instances');
 /**
  * Concert include to array
  * @param  {any} include
@@ -23,11 +24,11 @@ const convertIncludeToArray = R.curry(
  * @return {Object}
  */
 const updateIncludedPropsIfIncludeNotEmpty = R.curry(
-  (include, jsonApiData) => {
+  (include, jsonApiDataItem) => {
     // append included prop to avoild R.filter throw error
-    const jsonApiDataToUse = !R.prop('included', jsonApiData)
-      ? R.assoc('included', [], jsonApiData)
-      : jsonApiData;
+    const jsonApiDataToUse = !R.has('included', jsonApiDataItem)
+      ? R.assoc('included', [], jsonApiDataItem)
+      : jsonApiDataItem;
     const includeToUse = convertIncludeToArray(include);
     const setIncluded = R.flip(R.set(R.lensProp('included')));
     const updatedJsonApiObject = R.pipe(
@@ -43,31 +44,42 @@ const updateIncludedPropsIfIncludeNotEmpty = R.curry(
 /**
  * Update included props of an json api object
  * @param  {any} include - inlude from query string. Eg. ?inlcude=people
- * @param  {Object} jsonApiData
+ * @param  {Object} jsonApiDataItem
  * @return {Object}
  */
 const updateIncludedProps = R.curry(
-  (include, jsonApiData) => (
-    isEmpty(include)
-      ? R.omit(['included'])(jsonApiData)
-      : updateIncludedPropsIfIncludeNotEmpty(include, jsonApiData)),
+  (include, jsonApiDataItem) => {
+    const data = isEmpty(include)
+      ? R.omit(['included'])(jsonApiDataItem)
+      : updateIncludedPropsIfIncludeNotEmpty(include, jsonApiDataItem);
+    return Result.Ok(data);
+  },
 );
 /**
  * Keep included props of an json api object if request in query string
  * @param  {any} include - inlude from query string. Eg. ?inlcude=people
- * @param  {Array} jsonApiDatas - array of json api object
+ * @param  {Array} jsonApiData - array of json api object
  * @return {Array}
  */
-const keepIncludedIfRequest = R.curry(
-  (include, jsonApiDatas) => {
-    if (isArray(jsonApiDatas)) {
-      return R.map(
+const handleKeepIncludedIfRequest = R.curry(
+  (include, jsonApiData) => {
+    if (isArray(jsonApiData)) {
+      const data = R.map(
         updateIncludedProps(include),
-      )(jsonApiDatas);
-    } if (isPlainObject(jsonApiDatas)) {
-      return updateIncludedProps(include, jsonApiDatas);
+      )(jsonApiData);
+      return Result.Ok(unwrapResultList(data));
+    } if (isPlainObject(jsonApiData)) {
+      return updateIncludedProps(include, jsonApiData);
     }
-    return jsonApiDatas;
+    return Result.Ok(jsonApiData);
+  },
+);
+const keepIncludedIfRequest = R.curry(
+  (include, jsonApiData) => {
+    if (!Result.hasInstance(jsonApiData)) {
+      return handleKeepIncludedIfRequest(include, jsonApiData);
+    }
+    return jsonApiData.chain((data) => handleKeepIncludedIfRequest(include, data));
   },
 );
 module.exports = {
