@@ -36,9 +36,9 @@ const handleSerializeToJsonApi = R.curry(
   ) => {
     const typeErrors = validateParameters(
       {
-        include, jsonApiSerializer, type, extraData, data,
+        jsonApiSerializer, type, extraData, data,
       },
-      ['array', 'object', 'string', '*', 'object|array'],
+      ['object', 'string', '*', 'object|array'],
     );
     const { useGenericError } = config;
     if (!isEmpty(typeErrors)) {
@@ -67,7 +67,8 @@ const handleSerializeToJsonApi = R.curry(
       }
     }
     const serializedData = jsonApiSerializer.serialize(type, data, extraData);
-    return Result.Ok(keepIncludedIfRequest(include, serializedData));
+    const includeToUse = include || [];
+    return Result.Ok(keepIncludedIfRequest(includeToUse, serializedData));
   },
 );
 /**
