@@ -185,6 +185,14 @@ const deserializeJsonApi = R.curry(
       }
     }
     if (!Result.hasInstance(jsonApiData)) {
+      if(jsonApiData.type.includes('REJECT')) {
+        return Result.Error(
+          getErrorType(
+            { useGenericError, boomErrorType: 'serverUnavailable' },
+            jsonApiData.payload.message,
+          )
+        )
+      }
       return handleDeserializeJsonApi(jsonApiSerializer, type, jsonApiData);
     }
     return jsonApiData.chain(
@@ -239,6 +247,14 @@ const deserializeJsonApiAsync = R.curry(
       );
     }
     if (!Result.hasInstance(jsonApiData)) {
+      if(jsonApiData.type.includes('REJECT')) {
+        return Result.Error(
+          getErrorType(
+            { useGenericError, boomErrorType: 'serverUnavailable' },
+            jsonApiData.payload.message,
+          )
+        )
+      }
       return handleDeserializeJsonApiAsync(jsonApiSerializer, type, jsonApiData);
     }
     if (isFunction(jsonApiRegister)) {
