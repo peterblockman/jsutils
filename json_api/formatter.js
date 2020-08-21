@@ -13,6 +13,7 @@ const { pipeAwait } = require('../ramda/pipe');
 const {
   isJsonApiRegisteringSuccessful,
 } = require('./utils');
+const { isReduxAction, isRejectAction } = require('../redux/utils');
 /**
  * Serializing data to JSONAPI format
  * @param  {string|string[]} include - the properties that be included in included property
@@ -144,14 +145,25 @@ const serializeToJsonApiBoomError = createSerializeToJsonApi({ useGenericError: 
  * @param  {import('./typedefs').JsonApiData} jsonApiData
  * @return {import('./typedefs').JsonApiData} deserialized json api
  */
+
 const handleDeserializeJsonApi = R.curry(
   (jsonApiSerializer, type, jsonApiData) => {
+    if (isReduxAction(jsonApiData)) {
+      const { type: actionType, payload } = jsonApiData;
+      if (isRejectAction(actionType)) {
+        return jsonApiData;
+      }
+      const deserializedData = jsonApiSerializer.deserialize(type, payload);
+      return { type: actionType, payload: deserializedData };
+    }
     const deserializedData = jsonApiSerializer.deserialize(type, jsonApiData);
     return Result.Ok(deserializedData);
   },
 );
 /**
  * Deserialize jsonapi
+ * if one pass on redux action {type, payload}, instead of return Result
+ * it will return the action object.
  * @param  {import('./typedefs').DeserializeConfig} config
  * @param  {import('./typedefs').JsonApiRegister} jsonApiRegister
  * @param  {import('./typedefs').Type} type
@@ -172,9 +184,7 @@ const deserializeJsonApi = R.curry(
       },
       ['object', 'object', 'string', 'object|array'],
     );
-    /* if pass in a Redux action, return it. this will work when an reject action
-    from axios action being passed in this function */
-    if (R.has('type', jsonApiData)) return jsonApiData;
+
     const { useGenericError } = config;
     if (!isEmpty(typeErrors)) {
       return Result.Error(getErrorType(
@@ -208,10 +218,19 @@ const deserializeJsonApiBoomError = deserializeJsonApi({ useGenericError: false 
  */
 const handleDeserializeJsonApiAsync = R.curry(
   async (jsonApiSerializer, type, jsonApiData) => {
+    if (isReduxAction(jsonApiData)) {
+      const { type: actionType, payload } = jsonApiData;
+      if (isRejectAction(actionType)) {
+        return jsonApiData;
+      }
+      const deserializedData = await jsonApiSerializer.deserializeAsync(type, payload);
+      return { type: actionType, payload: deserializedData };
+    }
     const deserializedData = await jsonApiSerializer.deserializeAsync(type, jsonApiData);
     return Result.Ok(deserializedData);
   },
 );
+
 /**
  * Deserialize jsonapi async
  * @param  {import('./typedefs').DeserializeConfig} config
@@ -226,16 +245,14 @@ const deserializeJsonApiAsync = R.curry(
     config,
     { jsonApiRegister, registerData, jsonApiSerializer },
     type,
-    jsonApiData) => {
+    jsonApiData,
+  ) => {
     const typeErrors = validateParameters(
       {
         config, jsonApiSerializer, type, jsonApiData,
       },
       ['object', 'object', 'string', 'object|array'],
     );
-    /* if pass in a Redux action, return it. this will work when an reject action
-    from axios action being passed in this function */
-    if (R.has('type', jsonApiData)) return jsonApiData;
     const { useGenericError } = config;
     if (!isEmpty(typeErrors)) {
       return Result.Error(

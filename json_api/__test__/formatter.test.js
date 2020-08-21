@@ -180,8 +180,8 @@ describe('modules/json_api/formatter', () => {
       const config = {
         useGenericError: false,
       };
-      const type = 'bar';
-      const jsonApiData = { type: 'foo', payload: 'bar' };
+      const type = 'article';
+      const jsonApiData = { type: 'foo', payload: jsonApiMockObject };
       const output = deserializeJsonApi(
         config,
         {
@@ -192,7 +192,9 @@ describe('modules/json_api/formatter', () => {
         type,
         jsonApiData,
       );
-      expect(output).toStrictEqual(jsonApiData);
+      expect(output).toHaveProperty('type');
+      expect(output).toHaveProperty('payload');
+      expect(output.payload).toStrictEqual(expectedDeserializedOutput);
     });
   });
 });
