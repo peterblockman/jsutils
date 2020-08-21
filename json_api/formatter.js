@@ -171,6 +171,9 @@ const deserializeJsonApi = R.curry(
       },
       ['object', 'object', 'string', 'object|array'],
     );
+    /* if pass in a Redux action, return it. this will work when an reject action
+    from axios action being passed in this function */
+    if (R.has('type', jsonApiData)) return jsonApiData;
     const { useGenericError } = config;
     if (!isEmpty(typeErrors)) {
       return Result.Error(getErrorType(
@@ -229,6 +232,9 @@ const deserializeJsonApiAsync = R.curry(
       },
       ['object', 'object', 'string', 'object|array'],
     );
+    /* if pass in a Redux action, return it. this will work when an reject action
+    from axios action being passed in this function */
+    if (R.has('type', jsonApiData)) return jsonApiData;
     const { useGenericError } = config;
     if (!isEmpty(typeErrors)) {
       return Result.Error(

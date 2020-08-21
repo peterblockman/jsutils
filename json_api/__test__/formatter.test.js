@@ -176,5 +176,23 @@ describe('modules/json_api/formatter', () => {
       expect(Boom.isBoom(error)).toBe(true);
       expect(error.message).toBe('type expected string but got number');
     });
+    it('Should return the redux action if pass it to the function', () => {
+      const config = {
+        useGenericError: false,
+      };
+      const type = 'bar';
+      const jsonApiData = { type: 'foo', payload: 'bar' };
+      const output = deserializeJsonApi(
+        config,
+        {
+          jsonApiSerializer,
+          jsonApiRegister: gerenateJsonApiRegisterBoomError,
+          registerData,
+        },
+        type,
+        jsonApiData,
+      );
+      expect(output).toStrictEqual(jsonApiData);
+    });
   });
 });
