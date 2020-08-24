@@ -4,13 +4,12 @@ const isArray = require('lodash/isArray');
 const {
   groupObjectPropsByStructure,
   groupObjectsProps,
-  groupObjectsPropsAndHeadIfSingle,
   replaceNilPropGroupWithNone,
   groupDataBy,
 } = require('../group');
 const {
-  object,
-  objects,
+  user1,
+  users,
   expectedOutput,
   structure,
   structures,
@@ -22,30 +21,27 @@ const {
 describe('modules/utils/group', () => {
   describe('groupObjectPropsByStructure', () => {
     it('Should group an object with a given structure', () => {
-      const groupedOutput = groupObjectPropsByStructure(structure, object);
+      const groupedOutput = groupObjectPropsByStructure(structure, user1);
       expect(groupedOutput.userId).toBe(expectedOutput[0].userId);
       expect(groupedOutput.distributors).toMatchObject(expectedOutput[0].distributors);
     }); // end describe groupObjectPropsByStructure
   });
   describe('groupObjectsProps', () => {
     it('Should group an array of objects', () => {
-      const groupedOutput = groupObjectsProps(key, structures, objects);
+      const groupedOutput = groupObjectsProps(key, structures, users);
       expect(groupedOutput).toMatchObject(expectedOutput);
     });
-  }); // end describe groupObjectsProps
-  describe('groupObjectsPropsAndHeadIfSingle', () => {
-    it('Should group an array of objects', () => {
-      const groupedOutput = groupObjectsPropsAndHeadIfSingle(
+    it('Should head group if headGroup is true', () => {
+      const groupedOutput = groupObjectsProps(
         key,
         singleItemGroupStructures,
         singleItemGroupStructureObjects,
       );
-      expect(groupedOutput[0].userId).toBe(1);
-      expect(isPlainObject(groupedOutput[0].cars)).toBe(true);
-      expect(groupedOutput[1].userId).toBe(2);
-      expect(isArray(groupedOutput[1].cars)).toBe(true);
+      expect(isArray(groupedOutput[0].cars)).toBe(true);
+      expect(isPlainObject(groupedOutput[0].stats)).toBe(true);
     });
-  }); // end describe groupObjectsPropsAndHeadIfSingle
+  }); // end describe groupObjectsProps
+
   describe('replaceNilPropGroupWithNone', () => {
     it('Should replace the id of a group with "none" if the is null and undefined', () => {
       const input = {
@@ -113,7 +109,7 @@ describe('modules/utils/group', () => {
       ];
       const output = groupDataBy(
         'userId',
-        objects,
+        users,
       );
       expect(output.length).toBe(2);
       expect(output).toStrictEqual(expectedOutput);

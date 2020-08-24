@@ -85,7 +85,7 @@ const groupObjectsPropsByStructures = R.curry(
 );
 /**
  *  Group object's properties in array of objects
- *  it doesnot remove common propeters
+ *  it doesnot remove common propeties
  * @param  {string} key  - the key to group object
  * @param  {Object[]} structures - grouping sucture
  * @return {Object[]}
@@ -175,6 +175,48 @@ const combineCommonAndGroupedData = R.curry(
   ),
 );
 /**
+ * Check headGroup, then head if true
+ * @param  {Objects[]} groupedObject
+ * @param  {string} acc
+ * @param  {Objects[]} groupStructure
+ * @return {Objects[]}
+ */
+const headGroupData = R.curry(
+  (groupedObject, acc, groupStructure) => R.pipe(
+    (item) => {
+      const { headGroup, groupName } = groupStructure;
+      const handleHead = R.curry(
+        (
+          groupName,
+          headGroup,
+          groupData,
+        ) => (headGroup ? R.head(groupData[groupName]) : groupData[groupName]),
+      );
+      return R.pipe(
+        handleHead(groupName, headGroup),
+        R.flip(R.assoc(groupName))(acc),
+      )(item);
+    },
+  )(groupedObject),
+);
+/**
+ * Check if groupedObject's grouped props is single, then head if true
+ * return the current grouped props if false
+ * @param  {string} key
+ * @param  {Objects[]} structures
+ * @param  {Objects[]} groupedObject
+ * @return {Objects[]}
+ */
+const headGroupedPropsIfSingle = R.curry(
+  (key, structures, groupedObject) => R.pipe(
+    R.map(R.pick(['groupName', 'headGroup'])),
+    R.reduce(
+      headGroupData(groupedObject),
+      groupedObject,
+    ),
+  )(structures),
+);
+/**
  * Group object's properties in array of objects
  * with a given key and structures
  * assuming that all objects have the same keys
@@ -194,6 +236,7 @@ const groupObjectsProps = R.curry(
     return R.pipe(
       groupObjectsPropsByStructures(key, structures),
       combineCommonAndGroupedData(key, structures, commonData),
+      R.map(headGroupedPropsIfSingle(key, structures)),
     )(objects);
   },
 );
@@ -217,58 +260,7 @@ const groupObjectsPropsKeepOnlyValue = R.curry(
     )(objects);
   },
 );
-/**
- * Check if grouped prop's length is 1, then head if true
- * return the current grouped data if false
- * @param  {string} key
- * @param  {Objects[]} structures
- * @param  {Objects[]} groupedObject
- * @return {Objects[]}
- */
-const headGroupedPropsfSingle = R.curry(
-  (groupedObject, acc, groupName) => R.pipe(
-    R.prop(groupName),
-    (item) => (item.length === 1 ? R.head(item) : item),
-    R.flip(R.assoc(groupName))(acc),
-  )(groupedObject),
-);
-/**
- * Check if groupedObject's grouped props is single, then head if true
- * return the current grouped props if false
- * @param  {string} key
- * @param  {Objects[]} structures
- * @param  {Objects[]} groupedObject
- * @return {Objects[]}
- */
-const headGroupedPropsIfSingle = R.curry(
-  (key, structures, groupedObject) => R.pipe(
-    getGroupNames,
-    R.reduce(
-      headGroupedPropsfSingle(groupedObject),
-      groupedObject,
-    ),
-  )(structures),
-);
-/**
- * Group object's properties in array of objects
- * with a given key and structures. Similar to groupObjectsProps
- * but only if grouped data has 1 item it will return the item
- * instead of array. It is useful with JSONAPI
- * assuming that all objects have the same keys
- * TODO add check if all objects' keys are the same
- * @param  {string} key  - the key to group object
- * @param  {Object[]} structures - grouping sucture
- * @properties structure.groupProps - the properties that will be grouped
- * @properties structure.groupName - the name of the groups
- * @param  {Object[]} objects
- * @return {Object[]}
- */
-const groupObjectsPropsAndHeadIfSingle = R.curry(
-  (key, structures, objects) => R.pipe(
-    groupObjectsProps(key, structures),
-    R.map(headGroupedPropsIfSingle(key, structures)),
-  )(objects),
-);
+
 
 /**
  * Replace an propperty of a group to none if it is null
@@ -328,7 +320,6 @@ module.exports = {
   groupObjectPropsByStructure,
   groupObjectsPropsKeepOnlyValue,
   groupObjectsProps,
-  groupObjectsPropsAndHeadIfSingle,
   replaceNilPropGroupWithNone,
   groupDataBy,
 };

@@ -1,4 +1,4 @@
-const object = [
+const user1 = [
   {
     userId: 1,
     name: 'hey',
@@ -17,8 +17,8 @@ const object = [
     carId: 2,
   },
 ];
-const objects = [
-  ...object,
+const users = [
+  ...user1,
   {
     userId: 2,
     distributorId: 1,
@@ -42,6 +42,7 @@ const structure2 = {
   groupName: 'cars',
   groupProps: ['car', 'carId'],
 };
+
 const key = 'userId';
 
 const structures = [
@@ -121,15 +122,17 @@ const singleItemGroupStructures = [
   {
     groupName: 'cars',
     groupProps: ['car'],
+    headGroup: false,
   },
   {
     groupName: 'stats',
     groupProps: ['size', 'wheel'],
+    headGroup: true,
   },
 ];
 module.exports = {
-  object,
-  objects,
+  user1,
+  users,
   expectedOutput,
   structure,
   structures,
