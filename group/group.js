@@ -7,6 +7,8 @@ const isArray = require('lodash/fp/isArray');
 const isPlainObject = require('lodash/isPlainObject');
 const groupBy = require('lodash/groupBy');
 const { trace } = require('../ramda/trace');
+const { isArrayOfObjects } = require('../general_utils/utils');
+
 /**
  * Uniq group item by uniqKey if uniqKey not provided
  * return the groupData
@@ -216,6 +218,59 @@ const headGroupedPropsIfSingle = R.curry(
     ),
   )(structures),
 );
+const isAllNull = R.all((x) => !x);
+
+const isObjectValuesAllNull = R.curry(
+  (object) => R.pipe(
+    R.values,
+    isAllNull,
+  )(object),
+);
+const shouldOmitGroup = R.curry(
+  (value) => {
+    const isAllNull = R.all((x) => !x);
+    if (isPlainObject(value)) {
+      const isAllValuesNull = isObjectValuesAllNull(value);
+      const shouldOmit = isEmpty(value) || isAllValuesNull;
+      return shouldOmit;
+    }
+    if (isArray(value)) {
+      if (isEmpty(value)) return true;
+      if (isAllNull(value)) return true;
+      if (isArrayOfObjects(value)) {
+        return R.pipe(
+          R.map(
+            (item) => isObjectValuesAllNull(item),
+          ),
+          R.all((x) => x),
+        )(value);
+      }
+    }
+    return false;
+  },
+);
+const handleremoveGroupIfNull = R.curry((dataItem) => R.pipe(
+  R.toPairs,
+  R.filter((pairs) => RA.isObjLike(pairs[1])),
+  R.reduce(
+    (acc, pairs) => {
+      const [key, value] = pairs;
+      const shouldOmit = shouldOmitGroup(value);
+      if (shouldOmit) {
+        return R.omit([key], acc);
+      }
+      return acc;
+    },
+    dataItem,
+  ),
+)(dataItem));
+const removeGroupIfNull = R.curry(
+  (data) => {
+    if (isPlainObject(data)) return handleremoveGroupIfNull(data);
+    if (isArray(data)) return R.map(handleremoveGroupIfNull, data);
+    return data;
+  },
+);
 /**
  * Group object's properties in array of objects
  * with a given key and structures
@@ -238,6 +293,7 @@ const groupObjectsProps = R.curry(
       groupObjectsPropsByStructures(key, structures),
       combineCommonAndGroupedData(key, structures, commonData),
       R.map(headGroupedPropsIfSingle(key, structures)),
+      removeGroupIfNull,
     )(objects);
   },
 );
@@ -323,4 +379,5 @@ module.exports = {
   groupObjectsProps,
   replaceNilPropGroupWithNone,
   groupDataBy,
+  removeGroupIfNull,
 };

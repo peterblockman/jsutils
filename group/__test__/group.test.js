@@ -6,6 +6,7 @@ const {
   groupObjectsProps,
   replaceNilPropGroupWithNone,
   groupDataBy,
+  removeGroupIfNull,
 } = require('../group');
 const {
   user1,
@@ -39,6 +40,22 @@ describe('modules/utils/group', () => {
       );
       expect(isArray(groupedOutput[0].cars)).toBe(true);
       expect(isPlainObject(groupedOutput[0].stats)).toBe(true);
+    });
+    it('Should remove null group', () => {
+      const structure = [
+        ...singleItemGroupStructures,
+        {
+          groupName: 'foo',
+          groupProps: ['bar', 'banana'],
+        },
+      ];
+      const groupedOutput = groupObjectsProps(
+        key,
+        structure,
+        singleItemGroupStructureObjects,
+      );
+      expect(groupedOutput[0].foo).toBe(undefined);
+      expect(groupedOutput[1].foo).toBe(undefined);
     });
   }); // end describe groupObjectsProps
 
@@ -115,4 +132,70 @@ describe('modules/utils/group', () => {
       expect(output).toStrictEqual(expectedOutput);
     });
   }); // end describe replaceNilPropGroupWithNone
+
+  describe('removeGroupIfNull', () => {
+    const mockComments = {
+      _id: null,
+      body: null,
+      created: null,
+    };
+    const mockAuthors = [
+      {
+        id: null,
+        firstName: null,
+        lastName: null,
+        email: null,
+        age: null,
+        gender: null,
+      },
+      {
+        id: null,
+        firstName: null,
+        lastName: null,
+        email: null,
+        age: null,
+        gender: null,
+      },
+    ];
+
+    const data = [{
+      id: '1',
+      title: 'JSON API paints my bikeshed!',
+      body: 'The shortest article. Ever.',
+      created: '2015-05-22T14:56:29.000Z',
+      updated: '2015-05-22T14:56:28.000Z',
+      mockComments,
+      mockAuthors,
+      tags: ['1', '2'],
+      photos: [
+        'ed70cf44-9a34-4878-84e6-0c0e4a450cfe',
+        '24ba3666-a593-498c-9f5d-55a4ee08c72e',
+        'f386492d-df61-4573-b4e3-54f6f5d08acf',
+      ],
+    }];
+
+    const expectedOutput = [
+      {
+        id: '1',
+        title: 'JSON API paints my bikeshed!',
+        body: 'The shortest article. Ever.',
+        created: '2015-05-22T14:56:29.000Z',
+        updated: '2015-05-22T14:56:28.000Z',
+        tags: ['1', '2'],
+        photos: [
+          'ed70cf44-9a34-4878-84e6-0c0e4a450cfe',
+          '24ba3666-a593-498c-9f5d-55a4ee08c72e',
+          'f386492d-df61-4573-b4e3-54f6f5d08acf',
+        ],
+      },
+    ];
+    it('Remove the group data if null when data is an array', () => {
+      const output = removeGroupIfNull(data);
+      expect(output).toStrictEqual(expectedOutput);
+    });
+    it('Remove the group data if null when data is an object', () => {
+      const output = removeGroupIfNull(data[0]);
+      expect(output).toStrictEqual(expectedOutput[0]);
+    });
+  });
 });
