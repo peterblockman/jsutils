@@ -3,8 +3,12 @@ class self {
 }
 module.exports = self;
 const R = require('ramda');
+const RA = require('ramda-adjunct');
 const isEmpty = require('lodash/isEmpty');
 const isFunction = require('lodash/isFunction');
+const isPlainObject = require('lodash/isPlainObject');
+const isArray = require('lodash/isArray');
+
 const Result = require('folktale/result');
 const { keepIncludedIfRequest } = require('./included_prop');
 const { validateParameters } = require('../parameter/validate');
@@ -13,8 +17,62 @@ const { pipeAwait } = require('../ramda/pipe');
 const {
   isJsonApiRegisteringSuccessful,
 } = require('./utils');
+const { isArrayOfObjects } = require('../general_utils/utils');
 const { isReduxAction, isRejectAction } = require('../redux/utils');
 
+const isAllNull = R.all((x) => !x);
+
+const isObjectValuesAllNull = R.curry(
+  (object) => R.pipe(
+    R.values,
+    isAllNull,
+  )(object),
+);
+const shouldOmitGroup = R.curry(
+  (value) => {
+    const isAllNull = R.all((x) => !x);
+    if (isPlainObject(value)) {
+      const isAllValuesNull = isObjectValuesAllNull(value);
+      const shouldOmit = isEmpty(value) || isAllValuesNull;
+      return shouldOmit;
+    }
+    if (isArray(value)) {
+      if (isEmpty(value)) return true;
+      if (isAllNull(value)) return true;
+      if (isArrayOfObjects(value)) {
+        return R.pipe(
+          R.map(
+            (item) => isObjectValuesAllNull(item),
+          ),
+          R.all((x) => x),
+        )(value);
+      }
+    }
+    return false;
+  },
+);
+const handleremoveGroupIfNull = R.curry((jsonApiDataItem) => R.pipe(
+  R.toPairs,
+  R.filter((pairs) => RA.isObjLike(pairs[1])),
+  R.reduce(
+    (acc, pairs) => {
+      const [key, value] = pairs;
+      const shouldOmit = shouldOmitGroup(value);
+      if (shouldOmit) {
+        return R.omit([key], acc);
+      }
+      return acc;
+    },
+    jsonApiDataItem,
+  ),
+)(jsonApiDataItem));
+const removeGroupIfNull = R.curry(
+  (jsonApiData) => {
+    if (isPlainObject(jsonApiData)) return handleremoveGroupIfNull(jsonApiData);
+    if (isArray(jsonApiData)) return R.map(handleremoveGroupIfNull, jsonApiData);
+    return jsonApiData;
+  },
+);
 const createFormatData = (
   formatFn,
   jsonApiSerializer,
@@ -27,10 +85,12 @@ const createFormatData = (
     if (isRejectAction(actionType)) {
       return jsonApiData;
     }
-    const deserializedData = jsonApiSerializer[formatFn](type, payload, ...args);
+    const dataToUse = removeGroupIfNull(payload);
+    const deserializedData = jsonApiSerializer[formatFn](type, dataToUse, ...args);
     return { type: actionType, payload: deserializedData };
   }
-  const formatedData = jsonApiSerializer[formatFn](type, jsonApiData, ...args);
+  const dataToUse = removeGroupIfNull(jsonApiData);
+  const formatedData = jsonApiSerializer[formatFn](type, dataToUse, ...args);
   return Result.Ok(formatedData);
 };
 
@@ -312,3 +372,4 @@ self.deserializeJsonApiGenericError = deserializeJsonApiGenericError;
 self.deserializeJsonApiBoomError = deserializeJsonApiBoomError;
 self.deserializeJsonApiGenericErrorAsync = deserializeJsonApiGenericErrorAsync;
 self.deserializeJsonApiBoomErrorAsync = deserializeJsonApiBoomErrorAsync;
+self.removeGroupIfNull = removeGroupIfNull;

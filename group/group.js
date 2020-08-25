@@ -226,6 +226,7 @@ const headGroupedPropsIfSingle = R.curry(
  * @properties structure.groupProps - the properties that will be grouped
  * @properties structure.groupName - the name of the groups
  * @properties structure.uniqKey - key to make group items unique
+ * @properties structure.headGroup - head the group if true
  * @param  {Object[]} objects
  * @return {Object[]}
  */
