@@ -146,6 +146,13 @@ const getId = R.view(R.lensPath(['data', 'id']));
  */
 const getAttributes = R.view(R.lensPath(['data', 'attributes']));
 /**
+ * get relationships of an jsonapi object
+ * this function does not return Result
+ * due to the fact that it is mostly use in selector
+ * @param {Object} jsonApiData
+ */
+const getRelationships = R.view(R.lensPath(['data', 'relationships']));
+/**
  * get links of an jsonapi object
  * this function does not return Result
  * due to the fact that it is mostly use in selector
@@ -187,3 +194,4 @@ self.getRelatedLinks = getRelatedLinks;
 self.getSelfLinks = getSelfLinks;
 self.getType = getType;
 self.getMeta = getMeta;
+self.getRelationships = getRelationships;
