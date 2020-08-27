@@ -151,7 +151,7 @@ const getAttributes = R.view(R.lensPath(['data', 'attributes']));
  * due to the fact that it is mostly use in selector
  * @param {Object} jsonApiData
  */
-const getLinks = R.view(R.lensPath(['data', 'attributes']));
+const getLinks = R.view(R.lensPath(['data', 'links']));
 const getRelatedLinks = R.pipe(
   getLinks,
   R.prop('related'),
