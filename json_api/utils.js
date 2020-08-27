@@ -131,7 +131,59 @@ const getTypeAndAttrubutes = R.curry(
     return result.chain((data) => handleGetTypeAndAttrubutes(data));
   },
 );
+/**
+ * getId of an jsonapi object
+ * this function does not return Result
+ * due to the fact that it is mostly use in selector
+ * @param {Object} jsonApiData
+ */
+const getId = R.view(R.lensPath(['data', 'id']));
+/**
+ * get attributes of an jsonapi object
+ * this function does not return Result
+ * due to the fact that it is mostly use in selector
+ * @param {Object} jsonApiData
+ */
+const getAttributes = R.view(R.lensPath(['data', 'attributes']));
+/**
+ * get links of an jsonapi object
+ * this function does not return Result
+ * due to the fact that it is mostly use in selector
+ * @param {Object} jsonApiData
+ */
+const getLinks = R.view(R.lensPath(['data', 'attributes']));
+const getRelatedLinks = R.pipe(
+  getLinks,
+  R.prop('related'),
+);
+const getSelfLinks = R.pipe(
+  getLinks,
+  R.prop('self'),
+);
+/**
+ * get type of an jsonapi object
+ * this function does not return Result
+ * due to the fact that it is mostly use in selector
+ * @param {Object} jsonApiData
+ */
+const getType = R.view(R.lensPath(['data', 'type']));
+
+/**
+ * get meta data of an jsonapi object
+ * this function does not return Result
+ * due to the fact that it is mostly use in selector
+ * @param {Object} jsonApiData
+ */
+const getMeta = R.view(R.lensPath(['meta']));
+
 self.getErrorType = getErrorType;
 self.isJsonApiRegisteringSuccessful = isJsonApiRegisteringSuccessful;
 self.isJsonApi = isJsonApi;
 self.getTypeAndAttrubutes = getTypeAndAttrubutes;
+self.getId = getId;
+self.getAttributes = getAttributes;
+self.getLinks = getLinks;
+self.getRelatedLinks = getRelatedLinks;
+self.getSelfLinks = getSelfLinks;
+self.getType = getType;
+self.getMeta = getMeta;
