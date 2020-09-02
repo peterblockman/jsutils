@@ -57,6 +57,24 @@ describe('modules/utils/group', () => {
       expect(groupedOutput[0].foo).toBe(undefined);
       expect(groupedOutput[1].foo).toBe(undefined);
     });
+    it('Should rename if request', () => {
+      const structures = [
+        {
+          groupName: 'distributors',
+          groupProps: ['distributorId', 'fruit'],
+        },
+        { groupName: 'cars', groupProps: ['car', 'carId'] },
+      ];
+      const groupedOutput = groupObjectsProps(
+        key,
+        structures,
+        users,
+      );
+      console.log(groupedOutput);
+
+      // expect(isArray(groupedOutput[0].cars)).toBe(true);
+      // expect(isPlainObject(groupedOutput[0].stats)).toBe(true);
+    });
   }); // end describe groupObjectsProps
 
   describe('replaceNilPropGroupWithNone', () => {

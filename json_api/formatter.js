@@ -8,8 +8,10 @@ const isEmpty = require('lodash/isEmpty');
 const isFunction = require('lodash/isFunction');
 const isPlainObject = require('lodash/isPlainObject');
 const isArray = require('lodash/isArray');
-
 const Result = require('folktale/result');
+const jsonApiDeserialize = require('json-api-deserialize').deserialize;
+const { trace } = require('../ramda/trace');
+
 const { keepIncludedIfRequest } = require('./included_prop');
 const { validateParameters } = require('../parameter/validate');
 const { getErrorType } = require('./utils');
@@ -20,6 +22,9 @@ const {
 const { isArrayOfObjects } = require('../general_utils/utils');
 const { isReduxAction, isRejectAction } = require('../redux/utils');
 const { removeGroupIfNull } = require('../group/group');
+const {
+  isJsonApi,
+} = require('./utils');
 
 const createFormatData = (
   formatFn,
@@ -209,7 +214,7 @@ const serializeToJsonApiBoomError = createSerializeToJsonApi({ useGenericError: 
  * @return {import('./typedefs').JsonApiData | import('./typedefs').JsonApiData
  * & import('../folktale/typedefs').FolktaleResult } jsonApiDataResult
  */
-const deserializeJsonApi = R.curry(
+const createDeserializeJsonApi = R.curry(
   (
     config,
     { jsonApiRegister, registerData, jsonApiSerializer },
@@ -245,8 +250,8 @@ const deserializeJsonApi = R.curry(
   },
 );
 
-const deserializeJsonApiGenericError = deserializeJsonApi({ useGenericError: true });
-const deserializeJsonApiBoomError = deserializeJsonApi({ useGenericError: false });
+const deserializeJsonApiGenericError = createDeserializeJsonApi({ useGenericError: true });
+const deserializeJsonApiBoomError = createDeserializeJsonApi({ useGenericError: false });
 
 /**
  * Deserialize jsonapi async
@@ -257,7 +262,7 @@ const deserializeJsonApiBoomError = deserializeJsonApi({ useGenericError: false 
  * @return {import('./typedefs').JsonApiData
  * & import('../folktale/typedefs').FolktaleResult} jsonApiDataResult
  */
-const deserializeJsonApiAsync = R.curry(
+const createDeserializeJsonApiAsync = R.curry(
   async (
     config,
     { jsonApiRegister, registerData, jsonApiSerializer },
@@ -307,16 +312,113 @@ const deserializeJsonApiAsync = R.curry(
     );
   },
 );
-const deserializeJsonApiGenericErrorAsync = deserializeJsonApiAsync({ useGenericError: true });
-const deserializeJsonApiBoomErrorAsync = deserializeJsonApiAsync({ useGenericError: false });
+const deserializeJsonApiGenericErrorAsync = createDeserializeJsonApiAsync({ useGenericError: true });
+const deserializeJsonApiBoomErrorAsync = createDeserializeJsonApiAsync({ useGenericError: false });
+/**
+ * Deserialzed JsonAPI
+ * @param  {[type]}   onlyGetData      [description]
+ * @param  {[type]}   omitJsonApiProps [description]
+ * @param  {Function} dataResult)      [description]
+ * @return {[type]}                    [description]
+ */
+const deserializeJsonApiNoRegisterItem = R.curry(
+  (
+    onlyGetData,
+    omitJsonApiProps,
+    jsonApiData,
+  ) => {
+    // TODO validate type error here
+    const deserializedData = R.pipe(
+      R.clone,
+      jsonApiDeserialize,
+      R.omit(omitJsonApiProps),
+      (jsonApiObject) => (
+        onlyGetData
+          ? R.prop('data', jsonApiObject)
+          : jsonApiObject
+      ),
+    )(jsonApiData);
+    return deserializedData;
+  },
+);
+const handleDeserializeJsonApiNoRegister = R.curry(
+  (
+    onlyGetData,
+    omitJsonApiProps,
+    jsonApiData,
+  ) => {
+    if (!isJsonApi(jsonApiData)) {
+      return Result.Error(new Error('jsonApiData must be in jsonapi format'));
+    }
+    if (isArray(jsonApiData)) {
+      const result = R.map((item) => {
+        const formatedData = { data: item };
+        return deserializeJsonApiNoRegisterItem(
+          onlyGetData,
+          omitJsonApiProps,
+
+          formatedData,
+        );
+      }, jsonApiData);
+      return Result.Ok(result);
+    }
+    return Result.Ok(
+      deserializeJsonApiNoRegisterItem(
+        onlyGetData,
+        omitJsonApiProps,
+        jsonApiData,
+      ),
+    );
+  },
+);
+
+const deserializeJsonApiNoRegister = R.curry(
+  (
+    onlyGetData,
+    omitJsonApiProps,
+    dataResult,
+  ) => {
+    if (!Result.hasInstance(dataResult)) {
+      return handleDeserializeJsonApiNoRegister(
+        onlyGetData,
+        omitJsonApiProps,
+        dataResult,
+      );
+    }
+    return dataResult.chain(
+      (data) => handleDeserializeJsonApiNoRegister(
+        onlyGetData,
+        omitJsonApiProps,
+        data,
+      ),
+    );
+  },
+);
+const omitJsonApiProps =　[
+  'jsonapi',
+  'links',
+  'deserialized',
+];
+const deserializeJsonApi = deserializeJsonApiNoRegister(
+  false,
+  omitJsonApiProps,
+);
+
+const deserializeJsonApiAndGetOnlyData = deserializeJsonApiNoRegister(
+  true,
+  omitJsonApiProps,
+);
 
 self.createSerializeToJsonApi = createSerializeToJsonApi;
 self.serializeToJsonApiGenericError = serializeToJsonApiGenericError;
 self.serializeToJsonApiBoomError = serializeToJsonApiBoomError;
 self.handleSerializeToJsonApi = handleSerializeToJsonApi;
-self.deserializeJsonApi = deserializeJsonApi;
-self.deserializeJsonApiAsync = deserializeJsonApiAsync;
+self.createDeserializeJsonApi = createDeserializeJsonApi;
+self.createDeserializeJsonApiAsync = createDeserializeJsonApiAsync;
 self.deserializeJsonApiGenericError = deserializeJsonApiGenericError;
 self.deserializeJsonApiBoomError = deserializeJsonApiBoomError;
 self.deserializeJsonApiGenericErrorAsync = deserializeJsonApiGenericErrorAsync;
 self.deserializeJsonApiBoomErrorAsync = deserializeJsonApiBoomErrorAsync;
+self.deserializeJsonApiNoRegister = deserializeJsonApiNoRegister;
+self.deserializeJsonApi = deserializeJsonApi;
+self.deserializeJsonApiAndGetOnlyData = deserializeJsonApiAndGetOnlyData;

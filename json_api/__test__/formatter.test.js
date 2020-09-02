@@ -7,7 +7,7 @@ const {
   isInsatanceOfFolktaleResultError,
 } = require('../../folktale/instances');
 const {
-  deserializeJsonApi,
+  createDeserializeJsonApi,
   createSerializeToJsonApi,
   removeGroupIfNull,
 } = require('../formatter');
@@ -97,7 +97,7 @@ describe('modules/json_api/formatter', () => {
       expect(output.merge().data).not.toHaveProperty('included');
     });
   });
-  describe('deserializeJsonApi', () => {
+  describe('createDeserializeJsonApi', () => {
     let jsonApiSerializer;
     beforeEach(() => {
       jsonApiSerializer = new JSONAPISerializer();
@@ -106,7 +106,7 @@ describe('modules/json_api/formatter', () => {
       const config = {
         useGenericError: true,
       };
-      const output = deserializeJsonApi(
+      const output = createDeserializeJsonApi(
         config,
         {
           jsonApiSerializer,
@@ -125,7 +125,7 @@ describe('modules/json_api/formatter', () => {
         useGenericError: true,
       };
       const type = 1;
-      const output = deserializeJsonApi(
+      const output = createDeserializeJsonApi(
         config,
         {
           jsonApiSerializer,
@@ -144,7 +144,7 @@ describe('modules/json_api/formatter', () => {
       const config = {
         useGenericError: false,
       };
-      const output = deserializeJsonApi(
+      const output = createDeserializeJsonApi(
         config,
         {
           jsonApiSerializer,
@@ -162,7 +162,7 @@ describe('modules/json_api/formatter', () => {
         useGenericError: false,
       };
       const type = 1;
-      const output = deserializeJsonApi(
+      const output = createDeserializeJsonApi(
         config,
         {
           jsonApiSerializer,
@@ -183,7 +183,7 @@ describe('modules/json_api/formatter', () => {
       };
       const type = 'article';
       const jsonApiData = { type: 'foo', payload: jsonApiMockObject };
-      const output = deserializeJsonApi(
+      const output = createDeserializeJsonApi(
         config,
         {
           jsonApiSerializer,
