@@ -9,7 +9,7 @@ const { validateParameters } = require('../parameter/validate');
 const { getErrorType } = require('./utils');
 const { pipeAwait } = require('../ramda/pipe');
 const { axiosGet } = require('../axios/request');
-const { withFolktaleResultChain } = require('../folktale/add_result');
+const { chain } = require('../folktale/add_result');
 const { rPropWithFolktaleResult } = require('../ramda/ramda_folktale');
 
 /**
@@ -67,7 +67,7 @@ const fetchAndRegisterJsonApiGenericError = R.curry(
   async (url, jsonApiSerializer) => pipeAwait(
     axiosGet,
     rPropWithFolktaleResult('data'),
-    withFolktaleResultChain(
+    chain(
       gerenateJsonApiRegisterGenericError(jsonApiSerializer),
     ),
   )(url),
@@ -84,7 +84,7 @@ const fetchAndRegisterJsonApiBoomError = R.curry(
   async (url, jsonApiSerializer) => pipeAwait(
     axiosGet,
     rPropWithFolktaleResult('data'),
-    withFolktaleResultChain(
+    chain(
       gerenateJsonApiRegisterBoomError(jsonApiSerializer),
     ),
   )(url),

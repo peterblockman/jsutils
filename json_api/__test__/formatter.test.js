@@ -3,8 +3,8 @@ const Boom = require('@hapi/boom');
 const Result = require('folktale/result');
 const JSONAPISerializer = require('json-api-serializer');
 const {
-  isInsatanceOfFolktaleResultOk,
-  isInsatanceOfFolktaleResultError,
+  isOk,
+  isError,
 } = require('../../folktale/instances');
 const {
   createDeserializeJsonApi,
@@ -42,7 +42,7 @@ describe('modules/json_api/formatter', () => {
         },
         Result.Ok(rawData),
       );
-      expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
+      expect(isOk(output)).toBe(true);
       expect(R.keys(output.merge())).toMatchObject(objectKeys);
       expect(output.merge().data).toMatchObject(jsonApiMockObject.data);
       expect(output.merge().data).not.toHaveProperty('included');
@@ -60,7 +60,7 @@ describe('modules/json_api/formatter', () => {
         },
         Result.Ok([rawData, rawData]),
       );
-      expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
+      expect(isOk(output)).toBe(true);
       const outputData = output.merge();
       expect(R.keys(outputData)).toMatchObject([...objectKeys, 'included']);
       expect(outputData.data.length).toBe(2);
@@ -91,7 +91,7 @@ describe('modules/json_api/formatter', () => {
         },
         Result.Ok(rawData),
       );
-      expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
+      expect(isOk(output)).toBe(true);
       expect(R.keys(output.merge())).toMatchObject(objectKeys);
       expect(output.merge().data).toMatchObject(jsonApiMockObject.data);
       expect(output.merge().data).not.toHaveProperty('included');
@@ -116,7 +116,7 @@ describe('modules/json_api/formatter', () => {
         type,
         jsonApiMockObject,
       );
-      expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
+      expect(isOk(output)).toBe(true);
       expect(output.merge()).toStrictEqual(expectedDeserializedOutput);
     });
 
@@ -135,7 +135,7 @@ describe('modules/json_api/formatter', () => {
         type,
         jsonApiMockObject,
       );
-      expect(isInsatanceOfFolktaleResultError(output)).toBe(true);
+      expect(isError(output)).toBe(true);
       const error = output.merge();
       expect(error instanceof Error).toBe(true);
       expect(error.message).toBe('type expected string but got number');
@@ -154,7 +154,7 @@ describe('modules/json_api/formatter', () => {
         type,
         jsonApiMockObject,
       );
-      expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
+      expect(isOk(output)).toBe(true);
       expect(output.merge()).toStrictEqual(expectedDeserializedOutput);
     });
     it('Should return Result.Error data when type is invalid (useGenericError true)', () => {
@@ -172,7 +172,7 @@ describe('modules/json_api/formatter', () => {
         type,
         jsonApiMockObject,
       );
-      expect(isInsatanceOfFolktaleResultError(output)).toBe(true);
+      expect(isError(output)).toBe(true);
       const error = output.merge();
       expect(Boom.isBoom(error)).toBe(true);
       expect(error.message).toBe('type expected string but got number');

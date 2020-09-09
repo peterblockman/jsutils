@@ -12,16 +12,17 @@ const instances = {
   Ok: Result.Ok,
   Error: Result.Error,
 };
-const createIsInstaneOfFolktaleResult = R.curry(
-  (instances, instanceType, itemToCheck) => itemToCheck instanceof instances[instanceType],
+const createIsResult = R.curry(
+  (instances, instanceType, itemToCheck) => instances[instanceType].hasInstance(itemToCheck),
 );
-const isInsatanceOfFolktaleResult = createIsInstaneOfFolktaleResult(instances);
-const isInsatanceOfFolktaleResultOk = isInsatanceOfFolktaleResult('Ok');
-const isInsatanceOfFolktaleResultError = isInsatanceOfFolktaleResult('Error');
+const isResult = createIsResult(instances);
+const isOk = isResult('Ok');
+const isError = isResult('Error');
+
 const handleIsEveryItemOk = R.curry(
   (data) => {
     if (isArray(data)) {
-      return R.all(isInsatanceOfFolktaleResultOk, data);
+      return R.all(isOk, data);
     }
     return false;
   },
@@ -30,7 +31,7 @@ const isEveryItemOk = R.curry((result) => {
   if (!Result.hasInstance(result)) return handleIsEveryItemOk(result);
   result.chain((data) => handleIsEveryItemOk(data));
 });
-
+// this function is deplicated use R.sequence
 const hanleUnwrapResultList = R.curry(
   (data) => {
     if (!isArray(data)) {
@@ -42,10 +43,10 @@ const hanleUnwrapResultList = R.curry(
         data,
       );
     }
-    if (R.any(isInsatanceOfFolktaleResultError, data)) {
+    if (R.any(isError, data)) {
       // return the error message
       return R.pipe(
-        R.filter(isInsatanceOfFolktaleResultError),
+        R.filter(isError),
         R.map((item) => {
           const values = item.merge();
           if (values instanceof Error) {
@@ -65,7 +66,7 @@ const hanleUnwrapResultList = R.curry(
     // mixed between Ok and normal data type
     return R.map(
       (item) => (
-        isInsatanceOfFolktaleResultOk(item)
+        isOk(item)
           ? item.merge()
           : item
       ),
@@ -88,7 +89,7 @@ const unwrapResultList = R.curry(
     return resultInput.chain((data) => hanleUnwrapResultList(data));
   },
 );
-self.isInsatanceOfFolktaleResultOk = isInsatanceOfFolktaleResultOk;
-self.isInsatanceOfFolktaleResultError = isInsatanceOfFolktaleResultError;
+self.isOk = isOk;
+self.isError = isError;
 self.isEveryItemOk = isEveryItemOk;
 self.unwrapResultList = unwrapResultList;

@@ -20,7 +20,7 @@ const {
   objectKeys,
 } = require('./formatter_mocks');
 const {
-  isInsatanceOfFolktaleResultOk,
+  isOk,
 } = require('../../folktale/instances');
 const { jsonApiMockObject } = require('./include_mocks');
 
@@ -50,7 +50,7 @@ describe('modules/json_api/register', () => {
         },
         Result.Ok(rawData),
       );
-      expect(isInsatanceOfFolktaleResultOk(output)).toBe(true);
+      expect(isOk(output)).toBe(true);
       expect(R.keys(output.merge())).toMatchObject(objectKeys);
       expect(output.merge().data).toMatchObject(jsonApiMockObject.data);
     });

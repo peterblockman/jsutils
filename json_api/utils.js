@@ -8,7 +8,7 @@ const Result = require('folktale/result');
 const isEmpty = require('lodash/isEmpty');
 const isArray = require('lodash/isArray');
 const isPlainObject = require('lodash/isPlainObject');
-const { isInsatanceOfFolktaleResultOk } = require('../folktale/instances');
+const { isOk } = require('../folktale/instances');
 const {
   jsonApiKeys, jsonApiEssentialkeys, jsonApiDataEssentialKeys, jsonApiDataKeys,
 } = require('./constants');
@@ -40,7 +40,7 @@ const getErrorType = R.curry(
 const isJsonApiRegisteringSuccessful = R.curry(
   (jsonApiSerializer) => {
     if (
-      !isInsatanceOfFolktaleResultOk(jsonApiSerializer)
+      !isOk(jsonApiSerializer)
       || !Result.hasInstance(jsonApiSerializer)
     ) {
       return false;

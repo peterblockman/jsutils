@@ -1,14 +1,14 @@
 const R = require('ramda');
 const {
-  isInsatanceOfFolktaleResultOk,
-  isInsatanceOfFolktaleResultError,
+  isOk,
+  isError,
 } = require('./instances');
 
 
 const acceptOrThrow = R.curry((data) => {
-  if (isInsatanceOfFolktaleResultError(data)) {
+  if (isError(data)) {
     throw data.merge();
-  } else if (isInsatanceOfFolktaleResultOk(data)) {
+  } else if (isOk(data)) {
     return data.merge();
   }
   return data;

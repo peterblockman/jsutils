@@ -1,7 +1,7 @@
 const R = require('ramda');
 const Result = require('folktale/result');
 const Boom = require('@hapi/boom');
-const { isInsatanceOfFolktaleResultOk, isInsatanceOfFolktaleResultError } = require('./instances');
+const { isOk, isError } = require('./instances');
 
 
 /**
@@ -10,11 +10,11 @@ const { isInsatanceOfFolktaleResultOk, isInsatanceOfFolktaleResultError } = requ
  * @param  {FolktaleResult} result -  foltale result
  * @return {FolktaleResult}
  */
-const withFolktaleResultChain = R.curry(
+const chain = R.curry(
   (func, result) => {
     if (!R.or(
-      isInsatanceOfFolktaleResultOk(result),
-      isInsatanceOfFolktaleResultError(result),
+      isOk(result),
+      isError(result),
     )) {
       return Result.Error(Boom.badData('Input must be an instance of Result.Ok or Result.Error'));
     }
@@ -31,11 +31,11 @@ const withFolktaleResultChain = R.curry(
  * @param  {FolktaleResult} result -  foltale result
  * @return {FolktaleResult}
  */
-const withFolktaleResultChainAsync = R.curry(
+const chainAsync = R.curry(
   async (asyncFunc, result) => {
     if (!R.or(
-      isInsatanceOfFolktaleResultOk(result),
-      isInsatanceOfFolktaleResultError(result),
+      isOk(result),
+      isError(result),
     )) {
       return Result.Error(Boom.badData('Input must be an instance of Result.Ok or Result.Error'));
     }
@@ -54,7 +54,7 @@ const withFolktaleResultChainAsync = R.curry(
  * @param  {any} value  - the value to pass to Reuslt.Ok
  * @return {FolktaleResult}
  */
-const returnResultOkOrError = R.curry(
+const returnOkOrError = R.curry(
   (conditionFunction, errorMessage, value) => {
     const getResult = (errorMessage, data) => (conditionFunction(data)
       ? Result.Ok(data)
@@ -75,7 +75,7 @@ const returnResultOkOrError = R.curry(
  * @param  {any} value  - the value to pass to Reuslt.Ok
  * @return {FolktaleResult}
  */
-const returnResultOkOrErrorNotLogic = R.curry(
+const returnOkOrErrorNotLogic = R.curry(
   (conditionFunction, errorMessage, value) => {
     const getResult = (errorMessage, data) => (!conditionFunction(data)
       ? Result.Ok(data)
@@ -91,8 +91,8 @@ const returnResultOkOrErrorNotLogic = R.curry(
 
 
 module.exports = {
-  returnResultOkOrError,
-  returnResultOkOrErrorNotLogic,
-  withFolktaleResultChain,
-  withFolktaleResultChainAsync,
+  returnOkOrError,
+  returnOkOrErrorNotLogic,
+  chain,
+  chainAsync,
 };
