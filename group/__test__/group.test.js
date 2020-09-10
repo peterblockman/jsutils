@@ -63,17 +63,21 @@ describe('modules/utils/group', () => {
           groupName: 'distributors',
           groupProps: ['distributorId', 'fruit'],
         },
-        { groupName: 'cars', groupProps: ['car', 'carId'] },
+        {
+          groupName: 'cars',
+          groupProps: ['car', 'carId'],
+          renameProps: {
+            car: 'newCar',
+          },
+        },
       ];
       const groupedOutput = groupObjectsProps(
         key,
         structures,
         users,
       );
-      console.log(groupedOutput);
-
-      // expect(isArray(groupedOutput[0].cars)).toBe(true);
-      // expect(isPlainObject(groupedOutput[0].stats)).toBe(true);
+      expect(groupedOutput[0].cars[0]).toHaveProperty('newCar');
+      expect(groupedOutput[0].cars[0]).not.toHaveProperty('car');
     });
   }); // end describe groupObjectsProps
 

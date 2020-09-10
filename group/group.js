@@ -1,6 +1,5 @@
 const R = require('ramda');
 const RA = require('ramda-adjunct');
-const Result = require('folktale/result');
 const uniqBy = require('lodash/fp/uniqBy');
 const isEmpty = require('lodash/isEmpty');
 const isArray = require('lodash/fp/isArray');
@@ -21,6 +20,26 @@ const uniqGroupItem = R.curry(
     ? groupData
     : R.uniqBy(R.prop(uniqKey), groupData)),
 );
+const headGroupIfRequest = R.curry(
+  (
+    headGroup,
+    groupData,
+  ) => (headGroup ? R.head(groupData) : groupData),
+);
+const handleRenameGroupProps = R.curry(
+  (renameProps, data) => (isEmpty(renameProps)
+    ? data
+    : RA.renameKeys(renameProps, data)),
+);
+const renameGroupProps = R.curry(
+  (renameProps, groupData) => {
+    if (!isArray(groupData)) return [];
+    return R.map(
+      handleRenameGroupProps(renameProps),
+      groupData,
+    );
+  },
+);
 /**
  *  Group an object's properties
  *  it doesnot remove common propeters
@@ -30,7 +49,13 @@ const uniqGroupItem = R.curry(
  */
 const groupObjectPropsByStructure = R.curry(
   (structure, item) => {
-    const { groupName, groupProps, uniqKey } = structure;
+    const {
+      groupName,
+      groupProps,
+      uniqKey,
+      renameProps,
+      headGroup,
+    } = structure;
     return R.reduce(
       (acc, subItem) => ({
         ...R.omit(groupProps)(subItem),
@@ -38,30 +63,15 @@ const groupObjectPropsByStructure = R.curry(
           R.pick(groupProps),
           R.flip(R.append)(acc[groupName]),
           uniqGroupItem(uniqKey),
+          renameGroupProps(renameProps),
+          headGroupIfRequest(headGroup),
         )(subItem),
       }),
       { [groupName]: [] },
     )(item);
   },
 );
-/**
- *  Group an object's properties but only group the value and remove the key
- * @param  {Object} structure - grouping sucture
- * @param  {string} key  - the key to group object
- * @return {Object}
- */
-const groupObjectPropsByStructureKeepOnlyValue = R.curry(
-  (structure, item) => {
-    const { groupName, groupProps } = structure;
-    return R.reduce(
-      (acc, subItem) => ({
-        ...R.omit(groupProps)(subItem),
-        [groupName]: acc[groupName].concat([R.pick(groupProps)(subItem)[groupProps]]),
-      }),
-      { [groupName]: [] },
-    )(item);
-  },
-);
+
 /**
  *  Group object's properties in array of objects
  *  it doesnot remove common propeters
@@ -85,29 +95,7 @@ const groupObjectsPropsByStructures = R.curry(
     )
   ),
 );
-/**
- *  Group object's properties in array of objects
- *  it doesnot remove common propeties
- * @param  {string} key  - the key to group object
- * @param  {Object[]} structures - grouping sucture
- * @return {Object[]}
- */
-const groupObjectsPropsByStructuresKeepOnlyValue = R.curry(
-  (key, structures, data) => (
-    R.reduce(
-      (acc, structure) => {
-        const groupedData = R.pipe(
-          R.groupBy((x) => x[key]),
-          RA.toArray,
-          R.map(groupObjectPropsByStructureKeepOnlyValue(structure)),
-        )(data);
-        return R.concat(acc, groupedData);
-      },
-      [],
-      structures,
-    )
-  ),
-);
+
 /**
  * Get strutuces item
  * @param  {string} itemKey
@@ -176,48 +164,7 @@ const combineCommonAndGroupedData = R.curry(
     commonData,
   ),
 );
-/**
- * Check headGroup, then head if true
- * @param  {Objects[]} groupedObject
- * @param  {string} acc
- * @param  {Objects[]} groupStructure
- * @return {Objects[]}
- */
-const headGroupData = R.curry(
-  (groupedObject, acc, groupStructure) => R.pipe(
-    (item) => {
-      const { headGroup, groupName } = groupStructure;
-      const handleHead = R.curry(
-        (
-          groupName,
-          headGroup,
-          groupData,
-        ) => (headGroup ? R.head(groupData[groupName]) : groupData[groupName]),
-      );
-      return R.pipe(
-        handleHead(groupName, headGroup),
-        R.flip(R.assoc(groupName))(acc),
-      )(item);
-    },
-  )(groupedObject),
-);
-/**
- * Check if groupedObject's grouped props is single, then head if true
- * return the current grouped props if false
- * @param  {string} key
- * @param  {Objects[]} structures
- * @param  {Objects[]} groupedObject
- * @return {Objects[]}
- */
-const headGroupedPropsIfSingle = R.curry(
-  (key, structures, groupedObject) => R.pipe(
-    R.map(R.pick(['groupName', 'headGroup'])),
-    R.reduce(
-      headGroupData(groupedObject),
-      groupedObject,
-    ),
-  )(structures),
-);
+
 const isAllNull = R.all((x) => !x);
 
 const isObjectValuesAllNull = R.curry(
@@ -271,6 +218,8 @@ const removeGroupIfNull = R.curry(
     return data;
   },
 );
+
+
 /**
  * Group object's properties in array of objects
  * with a given key and structures
@@ -278,10 +227,11 @@ const removeGroupIfNull = R.curry(
  * TODO add check if all objects' keys are the same
  * @param  {string} key  - the key to group object
  * @param  {Object[]} structures - grouping sucture
- * @properties structure.groupProps - the properties that will be grouped
- * @properties structure.groupName - the name of the groups
- * @properties structure.uniqKey - key to make group items unique
- * @properties structure.headGroup - head the group if true
+ * @properties {string[]} structure.groupProps - the properties that will be grouped
+ * @properties {string} structure.groupName - the name of the groups
+ * @properties {string} structure.uniqKey - key to make group items unique
+ * @properties  {boolean}  structure.headGroup - head the group if true
+ * @properties  {Object} structure.renameProps - props to rename
  * @param  {Object[]} objects
  * @return {Object[]}
  */
@@ -292,28 +242,7 @@ const groupObjectsProps = R.curry(
     return R.pipe(
       groupObjectsPropsByStructures(key, structures),
       combineCommonAndGroupedData(key, structures, commonData),
-      R.map(headGroupedPropsIfSingle(key, structures)),
       removeGroupIfNull,
-    )(objects);
-  },
-);
-/**
- * Group object's properties in array of value
- * with a given key and structures
- * @param  {string} key  - the key to group object
- * @param  {Object[]} structures - grouping sucture
- * @properties structure.groupProps - the properties that will be grouped
- * @properties structure.groupName - the name of the groups
- * @param  {Object[]} objects
- * @return {Object[]}
- */
-const groupObjectsPropsKeepOnlyValue = R.curry(
-  (key, structures, objects) => {
-    if (isEmpty(objects)) return objects;
-    const commonData = getCommonProps(key, structures, objects);
-    return R.pipe(
-      groupObjectsPropsByStructuresKeepOnlyValue(key, structures),
-      combineCommonAndGroupedData(key, structures, commonData),
     )(objects);
   },
 );
@@ -375,7 +304,6 @@ const groupDataBy = R.curry(
 
 module.exports = {
   groupObjectPropsByStructure,
-  groupObjectsPropsKeepOnlyValue,
   groupObjectsProps,
   replaceNilPropGroupWithNone,
   groupDataBy,
