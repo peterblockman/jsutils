@@ -18,8 +18,7 @@
     "json-api-serializer": "^2.4.2",
     "lodash": "^4.17.19",
     "ramda": "^0.27.0",
-    "ramda-adjunct": "^2.26.0",
-    "require-directory": "^2.1.1"
+    "ramda-adjunct": "^2.26.0"
   },
   "devDependencies": {
     "axios-mock-adapter": "^1.18.1",
