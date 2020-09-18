@@ -41,6 +41,7 @@ const handleConvertArrayToObject = R.curry(
     return Result.Ok(data);
   },
 );
+
 const convertArrayToObject = R.curry(
   (key, array) => {
     if (!Result.hasInstance(array)) {
