@@ -1,3 +1,13 @@
+// TIME CONSTANTS
+// These can be used to convert time from milliseconds to following units
+const SECONDS = 1000;
+const MINUTES = SECONDS * 60;
+const HOURS = MINUTES * 60;
+const DAYS = HOURS * 24;
+const WEEKS = DAYS * 7;
+const MONTHS = DAYS * 30;
+const YEARS = DAYS * 365;
+
 // move apiUrl to database
 module.exports = Object.freeze({
   apiConfig: {
@@ -41,4 +51,11 @@ module.exports = Object.freeze({
   },
   whereMethods: ['where', 'orWhere', 'andWhere', 'whereIn', 'multipleWhereIn'],
   otherMethods: ['limit', 'offset', 'orderBy'],
+  SECONDS,
+  MINUTES,
+  HOURS,
+  DAYS,
+  WEEKS,
+  MONTHS,
+  YEARS,
 });
