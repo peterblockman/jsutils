@@ -1,14 +1,5 @@
 const {
   isEmpty,
-  chain,
-  map,
-  pick,
-  omit,
-  groupBy,
-  uniqWith,
-  uniqBy,
-  sortBy,
-  isNumber,
 } = require('lodash');
 const isPlainObject = require('lodash/isPlainObject');
 const toNumber = require('lodash/toNumber');
@@ -18,11 +9,8 @@ const chunk = require('lodash/chunk');
 const sumBy = require('lodash/fp/sumBy');
 const countBy = require('lodash/fp/countBy');
 const endsWith = require('lodash/fp/endsWith');
-const Promise = require('bluebird');
 const R = require('ramda');
-const RA = require('ramda-adjunct');
 const { regexExp } = require('./constants');
-const { trace } = require('../ramda/trace');
 
 const getMaxOfArray = (arrayData) => (
   Math.max.apply(Math, arrayData.data.map((o) => o[arrayData.key]))
