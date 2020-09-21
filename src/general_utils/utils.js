@@ -327,7 +327,24 @@ const generateEncondedQueryUrl = R.curry(
     return generator(baseUrl, queries);
   },
 );
+const isPartiesUnique = (arrUserId, othUserId) => (arrUserId === othUserId);
+const uniquifyParties = (arrVal, othVal) => {
+  const { userId: arrUserId, publicKey: arrPublicKey } = arrVal;
+  const { userId: othUserId, publicKey: othPublicKey } = othVal;
 
+  return isPartiesUnique(arrUserId, othUserId);
+};
+const removeDuplicatePartiesInAddresses = async (addresses) => {
+  const uniquePartiesAddresses = await Promise.map(addresses, (adrressItem) => {
+    const { parties } = adrressItem;
+    const uniqueParties = uniqWith(parties, uniquifyParties);
+    return {
+      ...adrressItem,
+      parties: uniqueParties,
+    };
+  });
+  return uniquePartiesAddresses;
+};
 const uniqByHOC = (iteratee) => (array) => uniqBy(array, iteratee);
 
 const groupData = (groupByKey) => (data) => Object.values(groupBy(data, groupByKey));
@@ -436,6 +453,8 @@ module.exports = {
   encodeURIComponentObjPropJSON,
   encodeURIComponentObjsPropJSON,
   generateEncondedQueryUrl,
+  uniquifyParties,
+  removeDuplicatePartiesInAddresses,
   uniqByHOC,
   groupData,
   sortData,
