@@ -13,6 +13,7 @@
     "axios": "^0.19.2",
     "bluebird": "^3.7.2",
     "bycontract": "^2.0.9",
+    "decimal.js": "^10.2.0",
     "folktale": "^2.3.2",
     "json-api-deserialize": "0.0.4",
     "json-api-serializer": "^2.4.2",

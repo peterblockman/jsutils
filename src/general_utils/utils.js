@@ -10,7 +10,9 @@ const sumBy = require('lodash/fp/sumBy');
 const countBy = require('lodash/fp/countBy');
 const endsWith = require('lodash/fp/endsWith');
 const R = require('ramda');
+const { Decimal } = require('decimal.js');
 const { regexExp } = require('./constants');
+const { emailRegex } = regexExp;
 
 const getMaxOfArray = (arrayData) => (
   Math.max.apply(Math, arrayData.data.map((o) => o[arrayData.key]))
@@ -35,6 +37,10 @@ const splitBy = R.curry(
 const splitByDot = splitBy('.');
 const splitByDash = splitBy('_');
 const splitByComma = splitBy(',');
+const splitByAtMark = splitBy('@');
+const extractDomainFromEmail = (email) => splitByAtMark(email)[0];
+const validateEmail = (email) => emailRegex.test(email);
+
 
 const extractBeforeDot = (domainName) => splitByDot(domainName)[0];
 const removeAllNumber = (string) => string.replace(regexExp.matchNumberRegex, '');
@@ -54,11 +60,36 @@ const checkBooleanQuery = (input) => {
 const chooseMainnetOrTestnet = (useTestNet) => (checkBooleanQuery(useTestNet) ? 'testnet' : 'mainnet');
 const endsWithSlash = endsWith('/');
 const appendUrlWithSlash = (url) => (endsWithSlash(url) ? url : `${url}/`);
+const removeLastSlash = (url) => (
+  endsWithSlash(url)
+    ? R.slice(0, -1, url)
+    : url
+);
 const getStringByte = (string) => Buffer.byteLength(string, 'utf8');
 const handleSumBy = R.curry((sumKey, item) => {
   const prop = R.prop(sumKey)(item);
   return toNumber(prop) || 0;
 });
+/**
+ * Convert targets object's props to number
+ * @param  {Object} object -  the object
+ * @return {Object}
+ */
+const toNumbers = R.curry(
+  (targetKeys, object) => R.pipe(
+    R.pick(targetKeys),
+    R.map(toNumber),
+    R.merge(object),
+  )(object),
+);
+const toStatoshis = (amount) => {
+  const satoshis = new Decimal(amount).times(100000000);
+  return Number(satoshis);
+};
+const toCrypto = (amount) => {
+  const crypto = new Decimal(amount).div(100000000);
+  return Number(crypto);
+};
 const sumFromList = R.curry((sumKey, list) => sumBy(handleSumBy(sumKey))(list));
 const countItemBy = R.curry((iteratee, array) => R.pipe(
   countBy(iteratee),
@@ -100,6 +131,58 @@ const isArrayOfObjects = R.curry(
 const isArrayOfStrings = R.curry(
   (array) => isArray(array) && R.all((item) => isString(item))(array),
 );
+
+const sliceLongValue = (value) => `*${value.slice(-20)}`;
+const handleNonLastValue = (value) => (validateEmail(value) ? extractDomainFromEmail(value) : value);
+const isValueTooLong = (value, maxLabelElementLength) => value.length >= maxLabelElementLength;
+const combineLabelAndValue = R.curry((seperator, label, value) => `${label}${seperator} ${value}`);
+const combineLabelAndValueByColon = combineLabelAndValue(':');
+const makeSelectLabel = (label, value, valueTooLong) => {
+  if (valueTooLong) {
+    return R.pipe(
+      sliceLongValue,
+      combineLabelAndValueByColon(label),
+    )(value);
+  }
+  return R.pipe(
+    handleNonLastValue,
+    combineLabelAndValueByColon(label),
+  )(value);
+};
+const append = R.curry(
+  (string, stringToAppend, separator) => (
+    stringToAppend
+      ? string + stringToAppend + separator
+      : string),
+);
+
+const getValues = R.curry((labelKeys, data) => labelKeys.map((item) => {
+  const { key, label } = item;
+  return {
+    label,
+    value: data[key],
+  };
+}));
+
+const generateLabels = R.curry((maxLabelElementLength, labelKeys, data) => {
+  const handleReduce = (acc, item, index, array) => {
+    const { value, label } = item;
+    if (value) {
+      const valueTooLong = isValueTooLong(value, maxLabelElementLength);
+      const newValue = makeSelectLabel(label, value, valueTooLong);
+      const isNotLastValue = index + 1 !== array.length;
+      const separator = isNotLastValue ? '/' : '';
+      acc = append(acc, newValue, separator);
+    }
+    return acc;
+  };
+  return !isEmpty(labelKeys)
+    ? R.pipe(
+      getValues(labelKeys),
+      R.addIndex(R.reduce)(handleReduce, ''),
+    )(data)
+    : data;
+});
   /**
    * Generate a number in [min, max] range with fixed length from a string
    * @param  {number} min
@@ -166,16 +249,175 @@ const isStringWithDelimeter = R.curry(
 );
 const isStringWithComma = isStringWithDelimeter(',');
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function withCancel(fn, cancelled, dispatch) {
+  return (...args) => {
+    if (!cancelled) {
+      return !dispatch
+        ? fn(...args)
+        : dispatch(fn(...args));
+    }
+  };
+}
+
+const generateUrlQueries = (queries) => R.pipe(
+  R.toPairs,
+  R.addIndex(R.reduce)((acc, item, index) => {
+    const prefix = index === 0 ? '?' : '&';
+    acc += `${prefix}${item[0]}=${item[1]}`;
+    return acc;
+  }, ''),
+)(queries);
+const encodeURIComponentJSON = (jsonData) => encodeURIComponent(JSON.stringify(jsonData));
+/**
+ *  encode uri component query object
+ * @param  {Object} obj) query object - the object that contains query value
+ * @return {string}
+ */
+const encodeURIComponentObjPropJSON = (obj) => R.pipe(
+  R.map((x) => encodeURIComponent(x)),
+  JSON.stringify,
+)(obj);
+/**
+ * encode uri component array of objs
+ * @param  {Object[]} objs array of query obj
+ * @return {string}
+ */
+const encodeURIComponentObjsPropJSON = (objs) => R.map(encodeURIComponentObjPropJSON)(objs);
+const appendQueryToUrl = R.curry((queryKey, baseUrl, query) => baseUrl + queryKey + query);
+const appendArrayQueryToUrl = R.curry((queryKey, baseUrl, queries) => R.pipe(
+  encodeURIComponentObjsPropJSON,
+  R.addIndex(R.reduce)((acc, query, index) => {
+    const queryKeyToUse = index === 0 ? `?${queryKey}` : `&${queryKey}`;
+    acc = appendQueryToUrl(queryKeyToUse)(acc)(query);
+    return acc;
+  }, baseUrl),
+)(queries));
+
+const appendObjQueryToUrl = R.curry((queryKey, baseUrl, queries) => R.pipe(
+  encodeURIComponentObjPropJSON,
+  appendQueryToUrl(queryKey)(baseUrl),
+)(queries));
+
+const createGenerateEncodedQueryUrl = R.curry(
+  (queryKey, baseUrl, queries) => (
+    isArray(queries)
+      ? appendArrayQueryToUrl(queryKey, baseUrl, queries)
+      : appendObjQueryToUrl(queryKey, baseUrl, queries)),
+);
+
+const generateEncondedQueryUrl = R.curry(
+  (baseUrl, queries) => {
+    const generator = isArray(queries)
+      ? createGenerateEncodedQueryUrl('q[]=')
+      : createGenerateEncodedQueryUrl('?q=');
+    return generator(baseUrl, queries);
+  },
+);
+const isPartiesUnique = (arrUserId, othUserId) => (arrUserId === othUserId);
+const uniquifyParties = (arrVal, othVal) => {
+  const { userId: arrUserId, publicKey: arrPublicKey } = arrVal;
+  const { userId: othUserId, publicKey: othPublicKey } = othVal;
+
+  return isPartiesUnique(arrUserId, othUserId);
+};
+const removeDuplicatePartiesInAddresses = async (addresses) => {
+  const uniquePartiesAddresses = await Promise.map(addresses, (adrressItem) => {
+    const { parties } = adrressItem;
+    const uniqueParties = uniqWith(parties, uniquifyParties);
+    return {
+      ...adrressItem,
+      parties: uniqueParties,
+    };
+  });
+  return uniquePartiesAddresses;
+};
+const uniqByHOC = (iteratee) => (array) => uniqBy(array, iteratee);
+
+const groupData = (groupByKey) => (data) => Object.values(groupBy(data, groupByKey));
+const sortData = (sortByKey) => (data) => Object.values(sortBy(data, [sortByKey]));
+
+const updateObjInArray = R.curry(
+  (comparingKey, itemToUpdate, array) => array.map((i, arrayIndex) => {
+    const shoudUpdate = isNumber(comparingKey)
+      ? comparingKey === arrayIndex
+      : i[comparingKey] !== undefined ? i[comparingKey] === itemToUpdate[comparingKey] : false;
+    return shoudUpdate
+      ? R.mergeDeepRight(i, itemToUpdate)
+      : i;
+  }),
+);
+
+const getFuntion = R.curry((functions, type) => R.prop(type)(functions));
+const handleGetFunction = R.curry((functions, type) => {
+  const fn = getFuntion(functions, type);
+  if (!fn) throw new Error('Function not found');
+  return fn;
+});
+
+// TODO change it so it is easier to scale
+const groupQueryResult = (
+  lv1GroupBy,
+  lv1Picks,
+  lv2GroupBy,
+  lv2Picks,
+  lv2GroupKey,
+  lv3Picks,
+  lv3GroupKey,
+  extra,
+) => async (data) => Promise.all(
+  chain(data)
+    .groupBy(lv1GroupBy)
+    .map((i) => {
+      if (!lv2GroupBy) return { ...pick(i[0], lv1Picks) };
+      const extraData = {
+        [lv3GroupKey]: [],
+      };
+      const lv2GroupData = lv3GroupKey
+        ? chain(i)
+          .map((v) => pick(v, lv2Picks))
+          .groupBy(lv2GroupBy)
+          .map((k) => {
+            k = sortBy(k, ['sigOrder']);
+            const lv3Data = map(k, (o) => omit(o, lv3Picks.omit));
+            if (!extraData[lv3GroupKey][0] && extra) extraData[lv3GroupKey] = [...lv3Data];
+            return {
+              ...pick(k[0], lv3Picks.pick),
+              [lv3GroupKey]: lv3Data,
+            };
+          })
+          .value()
+        : chain(i)
+          .groupBy(lv2GroupBy)
+          .map((v) => map(v, (o) => pick(o, lv2Picks)))
+          .flatten()
+          .value();
+      return {
+        ...pick(i[0], lv1Picks),
+        ...extra && { ...extraData },
+        [lv2GroupKey]: lv2GroupData,
+      };
+    })
+    .value(),
+);
+
 module.exports = {
   getMaxOfArray,
   addItemToArrayObj,
   extractBeforeDot,
   removeAllNumber,
+  toNumbers,
+  toStatoshis,
+  toCrypto,
   chooseMainnetOrTestnet,
   appendUrlWithSlash,
+  removeLastSlash,
   splitByDash,
   splitByComma,
   splitBy,
+  extractDomainFromEmail,
+  validateEmail,
   getStringByte,
   sumFromList,
   countItemByKey,
@@ -188,6 +430,22 @@ module.exports = {
   appendWithDollarSign,
   prependWith,
   prependWithCarat,
+  generateLabels,
   isStringWithDelimeter,
   isStringWithComma,
+  sliceLongValue,
+  sleep,
+  withCancel,
+  generateUrlQueries,
+  encodeURIComponentJSON,
+  encodeURIComponentObjPropJSON,
+  encodeURIComponentObjsPropJSON,
+  generateEncondedQueryUrl,
+  uniquifyParties,
+  removeDuplicatePartiesInAddresses,
+  uniqByHOC,
+  groupData,
+  sortData,
+  updateObjInArray,
+  handleGetFunction,
 };
