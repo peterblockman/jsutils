@@ -328,6 +328,75 @@ const generateEncondedQueryUrl = R.curry(
   },
 );
 
+const uniqByHOC = (iteratee) => (array) => uniqBy(array, iteratee);
+
+const groupData = (groupByKey) => (data) => Object.values(groupBy(data, groupByKey));
+const sortData = (sortByKey) => (data) => Object.values(sortBy(data, [sortByKey]));
+
+const updateObjInArray = R.curry(
+  (comparingKey, itemToUpdate, array) => array.map((i, arrayIndex) => {
+    const shoudUpdate = isNumber(comparingKey)
+      ? comparingKey === arrayIndex
+      : i[comparingKey] !== undefined ? i[comparingKey] === itemToUpdate[comparingKey] : false;
+    return shoudUpdate
+      ? R.mergeDeepRight(i, itemToUpdate)
+      : i;
+  }),
+);
+
+const getFuntion = R.curry((functions, type) => R.prop(type)(functions));
+const handleGetFunction = R.curry((functions, type) => {
+  const fn = getFuntion(functions, type);
+  if (!fn) throw new Error('Function not found');
+  return fn;
+});
+
+// TODO change it so it is easier to scale
+const groupQueryResult = (
+  lv1GroupBy,
+  lv1Picks,
+  lv2GroupBy,
+  lv2Picks,
+  lv2GroupKey,
+  lv3Picks,
+  lv3GroupKey,
+  extra,
+) => async (data) => Promise.all(
+  chain(data)
+    .groupBy(lv1GroupBy)
+    .map((i) => {
+      if (!lv2GroupBy) return { ...pick(i[0], lv1Picks) };
+      const extraData = {
+        [lv3GroupKey]: [],
+      };
+      const lv2GroupData = lv3GroupKey
+        ? chain(i)
+          .map((v) => pick(v, lv2Picks))
+          .groupBy(lv2GroupBy)
+          .map((k) => {
+            k = sortBy(k, ['sigOrder']);
+            const lv3Data = map(k, (o) => omit(o, lv3Picks.omit));
+            if (!extraData[lv3GroupKey][0] && extra) extraData[lv3GroupKey] = [...lv3Data];
+            return {
+              ...pick(k[0], lv3Picks.pick),
+              [lv3GroupKey]: lv3Data,
+            };
+          })
+          .value()
+        : chain(i)
+          .groupBy(lv2GroupBy)
+          .map((v) => map(v, (o) => pick(o, lv2Picks)))
+          .flatten()
+          .value();
+      return {
+        ...pick(i[0], lv1Picks),
+        ...extra && { ...extraData },
+        [lv2GroupKey]: lv2GroupData,
+      };
+    })
+    .value(),
+);
+
 module.exports = {
   getMaxOfArray,
   addItemToArrayObj,
@@ -367,4 +436,9 @@ module.exports = {
   encodeURIComponentObjPropJSON,
   encodeURIComponentObjsPropJSON,
   generateEncondedQueryUrl,
+  uniqByHOC,
+  groupData,
+  sortData,
+  updateObjInArray,
+  handleGetFunction,
 };
