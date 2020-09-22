@@ -30,6 +30,7 @@ const lodashFp = require('./src/lodash/fp');
 const parameterValidate = require('./src/parameter/validate');
 const ramdaPipe = require('./src/ramda/pipe');
 const ramdaFolktale = require('./src/ramda/ramda_folktale');
+const ramdaTrace = require('./src/ramda/trace');
 
 const reduxUtils = require('./src/redux/utils');
 
@@ -54,5 +55,6 @@ module.exports = {
   ...parameterValidate,
   ...ramdaPipe,
   ...ramdaFolktale,
+  ...ramdaTrace,
   ...reduxUtils,
 };
