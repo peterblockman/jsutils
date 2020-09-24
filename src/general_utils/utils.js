@@ -6,12 +6,23 @@ const toNumber = require('lodash/toNumber');
 const isString = require('lodash/isString');
 const isArray = require('lodash/isArray');
 const chunk = require('lodash/chunk');
+const uniqBy = require('lodash/uniqBy');
+const uniqWith = require('lodash/uniqWith');
+const groupBy = require('lodash/groupBy');
+const sortBy = require('lodash/sortBy');
+const chain = require('lodash/chain');
+const isNumber = require('lodash/isNumber');
+const pick = require('lodash/pick');
+const map = require('lodash/map');
+const omit = require('lodash/omit');
+
 const sumBy = require('lodash/fp/sumBy');
 const countBy = require('lodash/fp/countBy');
 const endsWith = require('lodash/fp/endsWith');
 const R = require('ramda');
 const { Decimal } = require('decimal.js');
 const { regexExp } = require('./constants');
+
 const { emailRegex } = regexExp;
 
 const getMaxOfArray = (arrayData) => (
@@ -448,4 +459,5 @@ module.exports = {
   sortData,
   updateObjInArray,
   handleGetFunction,
+  groupQueryResult,
 };
