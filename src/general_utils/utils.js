@@ -430,6 +430,7 @@ module.exports = {
   toStatoshis,
   toCrypto,
   weiToEther,
+  gweiToEther,
   chooseMainnetOrTestnet,
   appendUrlWithSlash,
   removeLastSlash,
