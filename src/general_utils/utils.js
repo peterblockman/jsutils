@@ -105,6 +105,10 @@ const weiToEther = (amount) => {
   const ether = new Decimal(amount).div(1000000000000000000);
   return Number(ether);
 };
+const gweiToEther = (amount) => {
+  const ether = new Decimal(amount).div(1000000000);
+  return Number(ether);
+};
 const sumFromList = R.curry((sumKey, list) => sumBy(handleSumBy(sumKey))(list));
 const countItemBy = R.curry((iteratee, array) => R.pipe(
   countBy(iteratee),
