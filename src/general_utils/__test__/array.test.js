@@ -26,7 +26,7 @@ describe('array utils test', () => {
       };
       const output = convertArrayToObject('id', array);
 
-      expect(output.merge()).toStrictEqual(expectedOutput);
+      expect(output).toStrictEqual(expectedOutput);
     });
   }); // end describe findShortestString
 });
