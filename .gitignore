@@ -16,5 +16,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-# mertool
+# merge tool
 .orig
+
+.DS_Store
