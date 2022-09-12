@@ -1,7 +1,7 @@
 
 
-# javascript_utils
-Contains useful utils functions for javascript projects
+# jsutils
+useful utils functions written functional programming styles
 # Utils
 1. parameter
 - Validating functions' parameters
@@ -50,7 +50,7 @@ Set heroku-prebuild
 ## Public Github repository
 ### Local
 ```
-npm install peterblockman/javascript_utils.git --save
+npm install peterblockman/jsutils.git --save
 ```
 ## Heroku
 It will be automatically installed while deploying to Heroku
