@@ -1,7 +1,7 @@
 
 
 # jsutils
-useful utils functions written functional programming styles
+useful utils functions written functional programming style
 # Utils
 1. parameter
 - Validating functions' parameters
